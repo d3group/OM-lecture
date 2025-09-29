@@ -320,7 +320,7 @@ class ForecastManager:
         self.model_params = model_params
         self.forecast_path = forecast_path
         self.historic_path = historic_path
-        self.overwrite = (overwrite,)
+        self.overwrite = overwrite
         self.date_col = "date"
 
     def _file_exists_and_no_overwrite(self, path: str) -> bool:
