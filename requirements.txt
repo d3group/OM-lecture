@@ -1,0 +1,13 @@
+marimo
+pandas
+polars
+pyarrow
+duckdb
+sqlglot
+numpy
+scipy
+altair
+requests
+matplotlib
+statsforecast
+scikit-learn
