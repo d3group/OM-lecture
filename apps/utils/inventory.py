@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
-from numba import njit, prange
 import altair as alt
 from scipy.stats import norm
 
@@ -44,32 +43,53 @@ class QRPolicy:
         self.type = "QR"
 
     @staticmethod
-    @njit
     def _simulate_cost_jit(demands, Q, R, K, H, S_cost, L):
+        """
+        Pure-Python / NumPy implementation of the original numba-compiled simulator.
+        Logic unchanged: arrivals are scheduled L periods after an order, reorder when
+        inventory + future arrivals <= R, and costs accumulated per period.
+        """
         n = len(demands)
-        arrivals = np.zeros(n, np.int64)
-        inv_level = R
+        # integer arrays for arrivals; use int64 for safety on sums
+        arrivals = np.zeros(n, dtype=np.int64)
+        inv_level = int(R)
         total_order_cost = 0.0
         total_holding_cost = 0.0
         total_stockout_cost = 0.0
 
+        # Iterate through periods (sequential dynamics require a loop)
         for i in range(n):
-            inv_level += arrivals[i]
-            future_arrival = np.sum(arrivals[i:i + L])
+            # incorporate any arrivals that occur at this time
+            inv_level += int(arrivals[i])
+
+            # sum of arrivals in the next L-1 periods (i .. i+L-1) is the "future" arrival within lead time
+            # This mirrors the original logic: future_arrival = np.sum(arrivals[i:i + L])
+            if L > 0:
+                # slice is efficient in NumPy; cast sum to Python int
+                future_arrival = int(arrivals[i:i + L].sum())
+            else:
+                future_arrival = 0
+
+            # decide whether to place an order
             if inv_level + future_arrival <= R:
                 if i + L < n:
-                    arrivals[i + L] += Q
-                total_order_cost += K
-            d = demands[i]
-            inv_level -= d
-            hold = max(0, inv_level)
-            short = max(0, -inv_level)            
-            total_stockout_cost += short * S_cost
-            total_holding_cost += hold * H
-        
-        average_costs = (total_order_cost + total_holding_cost + total_stockout_cost)/ n
+                    arrivals[i + L] += int(Q)
+                total_order_cost += float(K)
 
-        return int(average_costs)
+            # serve demand
+            d = int(demands[i])
+            inv_level -= d
+
+            # holding and stockout calculation
+            hold = inv_level if inv_level > 0 else 0
+            short = -inv_level if inv_level < 0 else 0
+
+            total_stockout_cost += short * float(S_cost)
+            total_holding_cost += hold * float(H)
+
+        average_costs = (total_order_cost + total_holding_cost + total_stockout_cost) / n
+        # return float average cost (keeps monetary meaning; previous int truncation removed for accuracy)
+        return float(average_costs)
 
     def _simulate_cost(self, demands: np.ndarray, Q: int = None, R: int = None) -> float:
         """
@@ -90,11 +110,11 @@ class QRPolicy:
             else:
                 raise ValueError("Q and R must be specified or set in params.")
 
-        return self._simulate_cost_jit(demands, Q, R, 
-                                        self.config.order_cost, 
-                                        self.config.holding_cost, 
-                                        self.config.stockout_cost, 
-                                        self.config.lead_time)
+        return self._simulate_cost_jit(demands, Q, R,
+                                       self.config.order_cost,
+                                       self.config.holding_cost,
+                                       self.config.stockout_cost,
+                                       self.config.lead_time)
     
     def set_params(self, demand: pd.Series, Q: int, R: int):
         """
@@ -145,23 +165,15 @@ class QRPolicy:
         best_R = 0
 
 
-        if parallel:
-            for i in prange(len(q_candidates)):
-                Q = q_candidates[i]
-                for R in r_candidates:
-                    cost = self._simulate_cost(demands, Q, R)
-                    if cost < best_cost:
-                        best_cost = cost
-                        best_Q = Q
-                        best_R = R
-        else:
-            for Q in q_candidates:
-                for R in r_candidates:
-                    cost = self._simulate_cost(demands, Q, R)
-                    if cost < best_cost:
-                        best_cost = cost
-                        best_Q = Q
-                        best_R = R
+        # The parallel flag previously used numba.prange; with a NumPy/Python simulator we
+        # revert to standard loops. The simulation itself uses NumPy arrays for numeric work.
+        for Q in q_candidates:
+            for R in r_candidates:
+                cost = self._simulate_cost(demands, Q, R)
+                if cost < best_cost:
+                    best_cost = cost
+                    best_Q = Q
+                    best_R = R
 
         self.params = {'Q': best_Q, 'R': best_R, 'avg_cost': best_cost, 'cost': best_cost * len(history)}
         return self
@@ -318,11 +330,8 @@ class QRForecasting(QRPolicy):
         
         # Calculate costs using simulation like in QRPolicy
         demands = data['demand'].values.astype(np.int64)
-        avg_cost = self._simulate_cost_jit(demands, Q, R, 
-                                               self.config.order_cost, 
-                                               self.config.holding_cost, 
-                                               self.config.stockout_cost, 
-                                               self.config.lead_time)
+        # Use the unified simulator entry point (pure-Python/NumPy implementation)
+        avg_cost = self._simulate_cost(demands, Q, R)
         self.params["avg_cost"] = avg_cost
         self.params["cost"] = avg_cost * len(data)
         
