@@ -306,11 +306,8 @@ class ForecastLoader:
 
     def __init__(
         self,
-        forecast_path: str,
-        historic_path: str = None,
+
     ):
-        self.forecast_path = forecast_path
-        self.historic_path = historic_path
         self.date_col = "date"
 
     def _load(self, path: str) -> pd.DataFrame:
@@ -332,6 +329,8 @@ class ForecastLoader:
 
     def load_data(
         self,
+        forecast_path: str,
+        historic_path: Optional[str] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Load or persist the provided DataFrames to forecast_path / historic_path.
@@ -346,11 +345,13 @@ class ForecastLoader:
             If historic_path and historic_n_windows provided: (forecast_df, historic_df)
             Otherwise: forecast_df
         """
-        # Forecasting
-        forecast = self._load(self.forecast_path)
-        historic_forecast = self._load(self.historic_path)
+        forecast = self._load(forecast_path)
 
-        return forecast, historic_forecast
+        if historic_path is None:
+            return forecast
+        else:
+            historic_forecast = self._load(historic_path)
+            return forecast, historic_forecast
 
 
     
