@@ -12,16 +12,10 @@ app = marimo.App(
 @app.cell(hide_code=True)
 def _():
     from utils.slides import SlideCreator
-    from utils.data import DataLoader, DataSplitter
-    from utils.forecast import ForecastManager, Evaluator
+    from utils.data import DataLoader
     from utils.inventory import SimpleForecastPlotter, SafetyStockPlotter
-    from utils.forecast import ForecastManager, Evaluator
     from sklearn.utils import Bunch
     import marimo as mo
-    import pandas as pd
-    import numpy as np
-    from io import StringIO
-    import altair as alt
     return (
         Bunch,
         DataLoader,
