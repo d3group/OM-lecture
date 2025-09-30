@@ -19,7 +19,6 @@ def _():
 
     class ImageURLs:
         BASE = "https://raw.githubusercontent.com/moobeck/OM-lecture/refs/heads/preprocess/apps/public/images"
-        LOGO = f"{BASE}/logo.png"
         DISTRIBUTION_CENTER = f"{BASE}/distribution_center_fuerth.png"
 
 
