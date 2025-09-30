@@ -12,7 +12,7 @@ app = marimo.App(
 def _():
     from utils.slides import SlideCreator
     from utils.data import DataLoader, DataSplitter
-    from utils.forecast import ForecastManager, Evaluator, ForecastPlotter, HoltDoubleExpPlotter, HoltWintersPlotter
+    from utils.forecast import ForecastLoader, Evaluator, ForecastPlotter, HoltDoubleExpPlotter, HoltWintersPlotter
     from sklearn.utils import Bunch
     import marimo as mo
     import numpy as np
@@ -22,7 +22,7 @@ def _():
         DataLoader,
         DataSplitter,
         Evaluator,
-        ForecastManager,
+        ForecastLoader,
         ForecastPlotter,
         SlideCreator,
         mo,

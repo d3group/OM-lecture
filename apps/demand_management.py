@@ -12,7 +12,7 @@ app = marimo.App(
 def _():
     from utils.slides import SlideCreator
     from utils.data import DataLoader, DataSplitter
-    from utils.forecast import ForecastManager, Evaluator, ForecastPlotter, HoltDoubleExpPlotter, HoltWintersPlotter, TimeSeriesDecompositionPlotter
+    from utils.forecast import ForecastLoader, Evaluator, ForecastPlotter, HoltDoubleExpPlotter, HoltWintersPlotter, TimeSeriesDecompositionPlotter
     from sklearn.utils import Bunch
     import marimo as mo
     import numpy as np
@@ -22,7 +22,7 @@ def _():
         DataLoader,
         DataSplitter,
         Evaluator,
-        ForecastManager,
+        ForecastLoader,
         ForecastPlotter,
         HoltDoubleExpPlotter,
         HoltWintersPlotter,
@@ -269,7 +269,7 @@ def _(Bunch):
 
 @app.cell(hide_code=True)
 def _(
-    ForecastManager,
+    ForecastLoader,
     MA_CONFIG,
     SES_CONFIG,
     data,
@@ -303,21 +303,8 @@ def _(
         "holt_winters": [{"alias": "Holt‑Winters"}],
     }
 
-    fc_manager = ForecastManager(
-        freq="W",
-        model_params=params,
-        forecast_path=f"{public_dir}/data/forecast_fuerth.csv",
-        historic_path=f"{public_dir}/data/historic_forecast_fuerth.csv",
-        overwrite=False,
-    )
-    forecast, historic_forecast = fc_manager.run(
-        data=data,
-        history=history,
-        n_windows=13,
-        historic_n_windows=40,
-        step_size=4,
-        h=4,
-    )
+    fc_loader = ForecastLoader()
+    forecast, historic_forecast = fc_loader.load_data()
 
     mo.ui.dataframe(
         forecast,

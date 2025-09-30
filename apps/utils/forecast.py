@@ -7,7 +7,6 @@ import os
 from typing import List, Union, Dict, Any, Tuple
 from enum import Enum
 import numpy as np
-import json
 from typing import Union, Dict, List, Any
 from typing import Optional, Union
 from statsmodels import api as sm
@@ -296,38 +295,23 @@ class Evaluator:
         return evaluation
 
 
-class ForecastManager:
+class ForecastLoader:
     """
     Manages loading or generating forecasts and historic forecasts using DemandForecaster.
 
     Attributes:
-        freq (str): Frequency string passed to DemandForecaster (e.g., 'W').
-        model_params (dict): Parameters for the forecasting models.
         forecast_path (str): File path for saving/loading the forecast results.
         historic_path (str): File path for saving/loading the historic forecast results.
-        overwrite (bool): If True, existing files will be regenerated and overwritten.
     """
 
     def __init__(
         self,
-        freq: str,
-        model_params: dict,
         forecast_path: str,
         historic_path: str = None,
-        overwrite: bool = False,
     ):
-        self.freq = freq
-        self.model_params = model_params
         self.forecast_path = forecast_path
         self.historic_path = historic_path
-        self.overwrite = overwrite
         self.date_col = "date"
-
-    def _file_exists_and_no_overwrite(self, path: str) -> bool:
-        """
-        Returns True if the file exists and overwrite flag is False.
-        """
-        return os.path.exists(path) and not self.overwrite
 
     def _load(self, path: str) -> pd.DataFrame:
         """
@@ -343,100 +327,33 @@ class ForecastManager:
         df[self.date_col] = pd.to_datetime(df[self.date_col])
         return df
 
-    def _save(self, df: pd.DataFrame, path: str) -> None:
-        """
-        Saves a DataFrame to CSV or pickle based on file extension.
-        Creates parent directories if needed.
-        """
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        ext = os.path.splitext(path)[1].lower()
-        if ext == ".csv":
-            df.to_csv(path)
-        elif ext in (".pkl", ".pickle"):
-            df.to_pickle(path)
-        else:
-            raise ValueError(f"Unsupported file extension: {ext}")
         
 
 
-    def _save_params(self, params: Dict[str, Any], path: str) -> None:
-        """
-        Saves model parameters to a JSON file.
-        Converts NumPy arrays to lists for JSON serialization.
-        """
-        def convert(obj):
-            if isinstance(obj, np.ndarray):
-                return obj.tolist()
-            if isinstance(obj, dict):
-                return {k: convert(v) for k, v in obj.items()}
-            if isinstance(obj, (list, tuple)):
-                return [convert(i) for i in obj]
-            return obj
-
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        params_path = os.path.splitext(path)[0] + "_params.json"
-        with open(params_path, "w") as f:
-            json.dump(convert(params), f, indent=4)
-
-
-    def run(
+    def load_data(
         self,
-        data: pd.DataFrame,
-        history: pd.DataFrame,
-        n_windows: int,
-        step_size: int,
-        h: int,
-        historic_n_windows: int = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
-        Loads or generates forecast and historic forecast results.
+        Load or persist the provided DataFrames to forecast_path / historic_path.
+        Does NOT run any forecasting or use DemandForecaster anymore.
 
         Args:
-            data (pd.DataFrame): DataFrame for current data forecasting.
-            history (pd.DataFrame): DataFrame for historic data forecasting.
-            n_windows (int): Number of cross-validation windows for forecast.
-            historic_n_windows (int): Number of cross-validation windows for historic forecast.
-            step_size (int): Step size between windows.
-            h (int): Forecast horizon.
+            data (pd.DataFrame): DataFrame to save/load as the 'forecast' artifact.
+            history (pd.DataFrame): DataFrame to save/load as the 'historic forecast' artifact.
+            n_windows, step_size, h, historic_n_windows: kept for compatibility but unused.
 
         Returns:
-            Tuple of (forecast, historic_forecast) DataFrames.
+            If historic_path and historic_n_windows provided: (forecast_df, historic_df)
+            Otherwise: forecast_df
         """
-        # Forecast
-        if self._file_exists_and_no_overwrite(self.forecast_path):
-            forecast = self._load(self.forecast_path)
-        else:
-            forecaster = DemandForecaster(
-                freq=self.freq, model_params=self.model_params
-            )
+        # Forecasting
+        forecast = self._load(self.forecast_path)
+        historic_forecast = self._load(self.historic_path)
 
-            forecast = forecaster.cross_validation(
-                df=data, n_windows=n_windows, step_size=step_size, h=h
-            )
-            self._save(forecast, self.forecast_path)
+        return forecast, historic_forecast
 
 
-            params = forecaster.get_params()
-            self._save_params(params, self.forecast_path)
-
-
-        if not ( self.historic_path is None or historic_n_windows is None):
-
-            # Historic Forecast
-            if self._file_exists_and_no_overwrite(self.historic_path):
-                historic_forecast = self._load(self.historic_path)
-            else:
-                forecaster = DemandForecaster(
-                    freq=self.freq, model_params=self.model_params
-                )
-                historic_forecast = forecaster.cross_validation(
-                    df=history, n_windows=historic_n_windows, step_size=step_size, h=h
-                )
-                self._save(historic_forecast, self.historic_path)
-
-            return forecast, historic_forecast
-        else:
-            return forecast
+    
 
 
 class PlotMode(Enum):
