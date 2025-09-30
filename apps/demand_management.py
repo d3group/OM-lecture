@@ -8,30 +8,98 @@ app = marimo.App(
 )
 
 
+
 @app.cell(hide_code=True)
 def _():
-    from utils.slides import SlideCreator
-    from utils.data import DataLoader, DataSplitter
-    from utils.forecast import ForecastLoader, Evaluator, ForecastPlotter, HoltDoubleExpPlotter, HoltWintersPlotter, TimeSeriesDecompositionPlotter
-    from sklearn.utils import Bunch
+    class DataURLs:
+        BASE = "https://raw.githubusercontent.com/moobeck/OM-lecture/refs/heads/main/apps/public/data"
+        DEMAND = f"{BASE}/daily_demand_data_fuerth.csv"
+        FORECAST = f"{BASE}/forecast_fuerth.csv"
+        HISTORIC_FORECAST = f"{BASE}/historic_forecast_fuerth.csv"
+
+    class ImageURLs:
+        BASE = "https://raw.githubusercontent.com/moobeck/OM-lecture/refs/heads/preprocess/apps/public/images"
+        LOGO = f"{BASE}/logo.png"
+        DISTRIBUTION_CENTER = f"{BASE}/distribution_center_fuerth.png"
+
+
+
+    return (DataURLs, ImageURLs)
+
+
+
+@app.cell(hide_code=True)
+async def _():
+    import micropip
+    import urllib.request
+    import os
+
+    class UtilsManager:
+        def __init__(self, dest_folder="utils"):
+            self.dest_folder = dest_folder
+            self.files = ["data.py", "forecast.py", "slides.py", "inventory.py"]
+            self.base_url = "https://raw.githubusercontent.com/moobeck/OM-lecture/preprocess/apps/utils/"
+            self.packages = [
+                "pandas",
+                "altair",
+                "scikit-learn",
+                "numpy",
+                "statsmodels",
+                "scipy",
+                "typing_extensions",
+                "utilsforecast"
+            ]
+            self.packages_installed = False
+            self.files_downloaded = False
+
+        async def install_packages(self):
+            for pkg in self.packages:
+                print(f"Installing {pkg}...")
+                await micropip.install(pkg)
+            print("✅ All packages installed.")
+            self.packages_installed = True
+
+        def download_files(self):
+            os.makedirs(self.dest_folder, exist_ok=True)
+            init_file = os.path.join(self.dest_folder, "__init__.py")
+            if not os.path.exists(init_file):
+                with open(init_file, "w") as f:
+                    f.write("# Init for utils package\n")
+
+            for f in self.files:
+                url = self.base_url + f
+                dest_path = os.path.join(self.dest_folder, f)
+                urllib.request.urlretrieve(url, dest_path)
+                print(f"📥 Downloaded {f} to {dest_path}")
+
+            self.files_downloaded = True
+
+    utils_manager = UtilsManager()
+
+    await utils_manager.install_packages()
+    utils_manager.download_files()
+
+    return (utils_manager,)
+
+
+
+@app.cell(hide_code=True)
+def _(utils_manager):
+    print("Packages installed:", utils_manager.packages_installed)
+    print("Files downloaded:", utils_manager.files_downloaded)
     import marimo as mo
     import numpy as np
     import pandas as pd
-    return (
-        Bunch,
-        DataLoader,
-        DataSplitter,
-        Evaluator,
-        ForecastLoader,
-        ForecastPlotter,
-        HoltDoubleExpPlotter,
-        HoltWintersPlotter,
-        SlideCreator,
-        TimeSeriesDecompositionPlotter,
-        mo,
-        np,
-        pd,
-    )
+    from sklearn.utils import Bunch
+    from utils.data import DataLoader, DataSplitter
+    from utils.forecast import (ForecastLoader, Evaluator, ForecastPlotter,
+                               HoltDoubleExpPlotter, HoltWintersPlotter,
+                               TimeSeriesDecompositionPlotter)
+    from utils.slides import SlideCreator
+
+
+    return (SlideCreator, DataLoader, DataSplitter, ForecastLoader, Evaluator, ForecastPlotter, HoltDoubleExpPlotter, HoltWintersPlotter, TimeSeriesDecompositionPlotter, np, pd, Bunch, mo)
+
 
 
 @app.cell(hide_code=True)
@@ -76,12 +144,12 @@ def _(titleSlide):
 
 
 @app.cell
-def _(mo, sc):
+def _(mo, sc, ImageURLs):  # <-- accept ImageURLs and use it
     introduction = sc.create_slide(
         "Let’s start with a very basic Forecasting task...", layout_type="2-row"
     )
     introduction.content1 = mo.image(
-        "public/Demand_Management/images/distribution_center_fuerth.png",
+        ImageURLs.DISTRIBUTION_CENTER,
         width=1000,
         style={"margin-right": "auto", "margin-left": "auto"},
     )
@@ -101,9 +169,9 @@ def _(introduction):
 
 
 @app.cell(hide_code=True)
-def _(DataLoader):
+def _(DataLoader, DataURLs):
     loader = DataLoader()
-    data_daily = loader.load(file_path="public/data/daily_demand_data_fuerth.csv")
+    data_daily = loader.load(file_path=DataURLs.DEMAND)
     return (data_daily,)
 
 
@@ -278,6 +346,7 @@ def _(
     mo,
     np,
     public_dir,
+    DataURLs,
 ):
 
     ma_qs = [q for q in range(MA_CONFIG.q_min, MA_CONFIG.q_max + 1, MA_CONFIG.q_step)]
@@ -304,7 +373,7 @@ def _(
     }
 
     fc_loader = ForecastLoader()
-    forecast, historic_forecast = fc_loader.load_data()
+    forecast, historic_forecast = fc_loader.load_data(DataURLs.FORECAST, DataURLs.HISTORIC_FORECAST)
 
     mo.ui.dataframe(
         forecast,
