@@ -174,7 +174,7 @@ class QRPolicy:
                     best_cost = cost
                     best_Q = Q
                     best_R = R
-
+        best_cost = int(round(best_cost, 0))
         self.params = {'Q': best_Q, 'R': best_R, 'avg_cost': best_cost, 'cost': best_cost * len(history)}
         return self
 
