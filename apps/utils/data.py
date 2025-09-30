@@ -129,7 +129,7 @@ class DataLoader:
         pd.DataFrame
             A DataFrame with columns ['unique_id', 'date', 'demand'].
         """
-        df = pd.read_csv(file_path, index_col=0, parse_dates=True)
+        df = pd.read_csv(file_path, parse_dates=True)
 
         return df
 
