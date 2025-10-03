@@ -21,7 +21,7 @@ jobs:
         run: pip install marimo
 
       - name: Export notebook
-        run: marimo export html-wasm apps/demand_management.py -o site --mode run
+        run: marimo export html-wasm apps/demand_management.py -o site --mode edit
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
