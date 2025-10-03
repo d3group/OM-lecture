@@ -1,56 +1,29 @@
-name: Deploy to GitHub Pages
+name: Deploy Marimo to GitHub Pages
 
 on:
   push:
-    branches: ['main']
-  workflow_dispatch:
-
-concurrency:
-  group: 'pages'
-  cancel-in-progress: false
-
-env:
-  UV_SYSTEM_PYTHON: 1
+    branches: ["main", "preprocess"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.12
+          python-version: "3.11"
 
-      - name: 📦 Install dependencies
-        run: |
-          uv pip install marimo
+      - name: Install marimo
+        run: pip install marimo
 
-      - name: 🛠️ Export notebooks
-        run: |
-          python scripts/build.py
+      - name: Export notebook to WASM HTML
+        run: marimo export html-wasm apps/demand_management.py -o site --mode run
 
-      - name: 📤 Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: _site
-
-  deploy:
-    needs: build
-
-    permissions:
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🚀 Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
