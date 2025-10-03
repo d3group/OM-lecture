@@ -2,7 +2,7 @@ name: Deploy Marimo to GitHub Pages
 
 on:
   push:
-    branches: ["main", "preprocess"]
+    branches: ["main"]
 
 jobs:
   build:
@@ -19,11 +19,5 @@ jobs:
       - name: Install marimo
         run: pip install marimo
 
-      - name: Export notebook to WASM HTML
-        run: marimo export html-wasm apps/demand_management.py -o site --mode run
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+      - name: Export notebook to docs
+        run: marimo export html-wasm apps/demand_management.py -o docs --mode run
