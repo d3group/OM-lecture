@@ -11,43 +11,59 @@ app = marimo.App(
 
 @app.cell(hide_code=True)
 def _():
+    GH_USER = "moobeck"
+    GH_REPO = "OM-lecture"
+    BRANCH = "main"
+
+    def raw_url(*parts: str) -> str:
+        path = "/".join(parts)
+        return f"https://raw.githubusercontent.com/{GH_USER}/{GH_REPO}/{BRANCH}/{path}"
+
     class DataURLs:
-        BASE = "https://raw.githubusercontent.com/moobeck/OM-lecture/refs/heads/main/apps/public/data"
+        BASE = raw_url("apps", "public", "data")
         DEMAND = f"{BASE}/daily_demand_data_fuerth.csv"
         FORECAST = f"{BASE}/forecast_fuerth.csv"
         HISTORIC_FORECAST = f"{BASE}/historic_forecast_fuerth.csv"
 
     class ImageURLs:
-        BASE = "https://raw.githubusercontent.com/moobeck/OM-lecture/refs/heads/preprocess/apps/public/images"
+        BASE = raw_url("apps", "public", "images")
         DISTRIBUTION_CENTER = f"{BASE}/distribution_center_fuerth.png"
 
+    class UtilsURLs:
+        BASE = raw_url("preprocess", "apps", "utils")
+        FILES = {
+            "data.py": f"{BASE}/data.py",
+            "forecast.py": f"{BASE}/forecast.py",
+            "slides.py": f"{BASE}/slides.py",
+            "inventory.py": f"{BASE}/inventory.py",
+        }
+        PACKAGES = [
+            "pandas",
+            "altair",
+            "scikit-learn",
+            "numpy",
+            "statsmodels",
+            "scipy",
+            "typing_extensions",
+            "utilsforecast"
+        ]
 
-
-    return (DataURLs, ImageURLs)
+    return (DataURLs, ImageURLs, UtilsURLs)
 
 
 
 @app.cell(hide_code=True)
-async def _():
+async def _(UtilsURLs):
     import micropip
     import urllib.request
     import os
 
     class UtilsManager:
-        def __init__(self, dest_folder="utils"):
+        def __init__(self, dest_folder="utils", files_map=None, packages=None):
             self.dest_folder = dest_folder
-            self.files = ["data.py", "forecast.py", "slides.py", "inventory.py"]
-            self.base_url = "https://raw.githubusercontent.com/moobeck/OM-lecture/preprocess/apps/utils/"
-            self.packages = [
-                "pandas",
-                "altair",
-                "scikit-learn",
-                "numpy",
-                "statsmodels",
-                "scipy",
-                "typing_extensions",
-                "utilsforecast"
-            ]
+            self.files_map = files_map or {}
+            self.files = list(self.files_map.keys())
+            self.packages = packages or []
             self.packages_installed = False
             self.files_downloaded = False
 
@@ -65,15 +81,17 @@ async def _():
                 with open(init_file, "w") as f:
                     f.write("# Init for utils package\n")
 
-            for f in self.files:
-                url = self.base_url + f
-                dest_path = os.path.join(self.dest_folder, f)
+            for fname, url in self.files_map.items():
+                dest_path = os.path.join(self.dest_folder, fname)
                 urllib.request.urlretrieve(url, dest_path)
-                print(f"📥 Downloaded {f} to {dest_path}")
+                print(f"📥 Downloaded {fname} to {dest_path}")
 
             self.files_downloaded = True
 
-    utils_manager = UtilsManager()
+    utils_manager = UtilsManager(
+        files_map=UtilsURLs.FILES,
+        packages=UtilsURLs.PACKAGES,
+    )
 
     await utils_manager.install_packages()
     utils_manager.download_files()
