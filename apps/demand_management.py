@@ -30,7 +30,7 @@ def _():
         DISTRIBUTION_CENTER = f"{BASE}/distribution_center_fuerth.png"
 
     class UtilsURLs:
-        BASE = raw_url("preprocess", "apps", "utils")
+        BASE = raw_url("apps", "utils")
         FILES = {
             "data.py": f"{BASE}/data.py",
             "forecast.py": f"{BASE}/forecast.py",
