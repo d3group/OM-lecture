@@ -80,6 +80,11 @@ async def _():
 
     return (utils_manager,)
 
+@app.cell(hide_code=True)
+def _():
+    import warnings
+    warnings.filterwarnings("ignore")
+    return
 
 
 @app.cell(hide_code=True)
