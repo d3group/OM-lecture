@@ -21,7 +21,7 @@ jobs:
         run: pip install marimo
 
       - name: Export notebook
-        run: marimo export html-wasm apps/demand_management.py -o site --mode edit
+        run: marimo export html-wasm apps/demand_management.py -o site/demand_management --mode edit
 
       - name: Upload Pages Artifact
         if: github.ref == 'refs/heads/main'
