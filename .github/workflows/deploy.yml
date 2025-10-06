@@ -17,8 +17,9 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install marimo
-        run: pip install marimo
+      - name: Install dependencies
+        run: |
+          pip install marimo nbformat
 
       - name: Export app as HTML
         run: marimo export html-wasm apps/demand_management.py -o site/demand_management --mode edit
