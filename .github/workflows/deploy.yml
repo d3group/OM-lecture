@@ -2,7 +2,7 @@ name: Deploy Marimo to GitHub Pages
 
 on:
   push:
-    branches: ["main", "preprocess"]
+    branches: ["main"]
 
 jobs:
   build:
@@ -35,9 +35,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
-    permissions:
-      pages: write
-      id-token: write
+      - name: Install marimo
+        run: pip install marimo
 
     steps:
       - name: Deploy to GitHub Pages
