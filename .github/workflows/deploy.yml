@@ -20,8 +20,11 @@ jobs:
       - name: Install marimo
         run: pip install marimo
 
-      - name: Export notebook
+      - name: Export app as HTML
         run: marimo export html-wasm apps/demand_management.py -o site/demand_management --mode edit
+
+      - name: Export app as Jupyter Notebook
+        run: marimo export ipynb apps/demand_management.py -o site/downloads/demand_management.ipynb
 
       - name: Upload Pages Artifact
         if: github.ref == 'refs/heads/main'
