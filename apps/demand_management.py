@@ -11,7 +11,7 @@ app = marimo.App(
 
 @app.cell(hide_code=True)
 def _():
-    GH_USER = "moobeck"
+    GH_USER = "d3group"
     GH_REPO = "OM-lecture"
     BRANCH = "main"
 
