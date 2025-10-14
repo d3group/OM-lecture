@@ -163,13 +163,13 @@ def _(titleSlide):
 
 
 @app.cell
-def _(mo, sc):
+def _(mo, sc, ImageURLs):
     introduction = sc.create_slide(
         "From Demand Management to Inventory Management",
         layout_type="2-row",
     )
     introduction.content1 = mo.image(
-        "public/Inventory_Management/images/distribution_center_fuerth.png",
+        ImageURLs.DISTRIBUTION_CENTER,
         width=1000,
         style={"margin-right": "auto", "margin-left": "auto"},
     )
