@@ -97,8 +97,6 @@ def _():
         SlideCreator,
         mo,
     )
-
-
 @app.cell(hide_code=True)
 def _(mo):
     public_dir = (
@@ -106,7 +104,7 @@ def _(mo):
         if str(mo.notebook_location).startswith("https://")
         else "public"
     )
-    return
+    return (public_dir,)
 
 
 @app.cell
@@ -140,13 +138,13 @@ def _(titleSlide):
 
 
 @app.cell
-def _(mo, sc, ImageURLs):
+def _(mo, sc):
     introduction = sc.create_slide(
         "From Demand Management to Inventory Management",
         layout_type="2-row",
     )
     introduction.content1 = mo.image(
-        ImageURLs.DISTRIBUTION_CENTER,
+        "public/Inventory_Management/images/distribution_center_fuerth.png",
         width=1000,
         style={"margin-right": "auto", "margin-left": "auto"},
     )
@@ -165,9 +163,9 @@ def _(introduction):
 
 
 @app.cell(hide_code=True)
-def _(DataLoader, DataURLs):
+def _(DataLoader):
     loader = DataLoader()
-    data = loader.load(file_path=DataURLs.DEMAND)
+    data = loader.load(file_path="public/data/daily_demand_data_fuerth.csv")
     # Filter for date 2025-07-01
     data = data[data.date >= "2025-07-01"].reset_index(drop=True)
     return (data,)
@@ -1019,7 +1017,7 @@ def _(mo, sc):
         - Too high reorder point → excess inventory costs  
 
         **The Solution:**  
-        - Keep the EOQ formula for order quantity: $Q^* = \sqrt{\\frac{2DK}{h}}$  
+        - Keep the EOQ formula for order quantity: $Q^* = \sqrt{\\frac{2dK}{h}}$  
         - Modify the reorder point to include **safety stock** for demand uncertainty  
 
         This extension allows us to balance service level (avoiding stockouts) with inventory costs.
@@ -1047,8 +1045,7 @@ def _(mo, sc):
 
         - **Definition:** $\alpha = P(\text{no stockout during lead time})$
         - **Interpretation:** If $\alpha = 0.95$, we expect to avoid stockouts 95% of the time
-        - Simply speaking with $\alpha=0.95$, we will be able to fullfill all of our demand on 95 out of 100 days.
-
+    
         **Key Properties:**  
         -  $\alpha$ is a **period-based** measure (focuses on cycles, not individual units)
         - Higher  $\alpha$ requires more safety stock but reduces stockout frequency
@@ -1060,8 +1057,11 @@ def _(mo, sc):
         $$\alpha = \frac{p}{h + p}$$
 
         **Intuition:**
+
         - When stockout costs are high relative to holding costs, optimal service level approaches 1
+    
         - When holding costs are high relative to stockout costs, optimal service level is lower   
+    
         - This formula provides the cost-optimal balance between service and inventory investment
 
     """)
