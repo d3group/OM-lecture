@@ -188,9 +188,9 @@ def _(introduction):
 
 
 @app.cell(hide_code=True)
-def _(DataLoader):
+def _(DataLoader, DataURLs):
     loader = DataLoader()
-    data = loader.load(file_path="public/data/daily_demand_data_fuerth.csv")
+    data = loader.load(file_path=DataURLs.DEMAND)
     # Filter for date 2025-07-01
     data = data[data.date >= "2025-07-01"].reset_index(drop=True)
     return (data,)
