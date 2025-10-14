@@ -3,7 +3,7 @@ import marimo
 __generated_with = "0.15.5"
 app = marimo.App(
     width="medium",
-    app_title="Demand Management",
+    app_title="Inventory Management",
     layout_file="layouts/inventory_management.slides.json",
     css_file="d3.css",
 )
@@ -83,7 +83,9 @@ async def _():
 
 
 @app.cell(hide_code=True)
-def _():
+def _(utils_manager):
+    print("Packages installed:", utils_manager.packages_installed)
+    print("Files downloaded:", utils_manager.files_downloaded)
     from utils.slides import SlideCreator
     from utils.data import DataLoader
     from utils.inventory import SimpleForecastPlotter, SafetyStockPlotter
