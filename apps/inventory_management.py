@@ -3,52 +3,66 @@ import marimo
 __generated_with = "0.15.5"
 app = marimo.App(
     width="medium",
-    app_title="Demand Management",
+    app_title="Inventory Management",
     layout_file="layouts/inventory_management.slides.json",
     css_file="d3.css",
 )
 
-
-
 @app.cell(hide_code=True)
 def _():
+    GH_USER = "d3group"
+    GH_REPO = "OM-lecture"
+    BRANCH = "main"
+
+    def raw_url(*parts: str) -> str:
+        path = "/".join(parts)
+        return f"https://raw.githubusercontent.com/{GH_USER}/{GH_REPO}/{BRANCH}/{path}"
+
     class DataURLs:
-        BASE = "https://raw.githubusercontent.com/moobeck/OM-lecture/refs/heads/main/apps/public/data"
+        BASE = raw_url("apps", "public", "data")
         DEMAND = f"{BASE}/daily_demand_data_fuerth.csv"
         FORECAST = f"{BASE}/forecast_fuerth.csv"
         HISTORIC_FORECAST = f"{BASE}/historic_forecast_fuerth.csv"
 
     class ImageURLs:
-        BASE = "https://raw.githubusercontent.com/moobeck/OM-lecture/refs/heads/preprocess/apps/public/images"
+        BASE = raw_url("apps", "public", "images")
         DISTRIBUTION_CENTER = f"{BASE}/distribution_center_fuerth.png"
 
+    class UtilsURLs:
+        BASE = raw_url("apps", "utils")
+        FILES = {
+            "data.py": f"{BASE}/data.py",
+            "forecast.py": f"{BASE}/forecast.py",
+            "slides.py": f"{BASE}/slides.py",
+            "inventory.py": f"{BASE}/inventory.py",
+        }
+        PACKAGES = [
+            "pandas",
+            "altair",
+            "scikit-learn",
+            "numpy",
+            "statsmodels",
+            "scipy",
+            "typing_extensions",
+            "utilsforecast"
+        ]
 
-
-    return (DataURLs, ImageURLs)
+    return (DataURLs, ImageURLs, UtilsURLs)
 
 
 
 @app.cell(hide_code=True)
-async def _():
+async def _(UtilsURLs):
     import micropip
     import urllib.request
     import os
 
     class UtilsManager:
-        def __init__(self, dest_folder="utils"):
+        def __init__(self, dest_folder="utils", files_map=None, packages=None):
             self.dest_folder = dest_folder
-            self.files = ["data.py", "forecast.py", "slides.py", "inventory.py"]
-            self.base_url = "https://raw.githubusercontent.com/moobeck/OM-lecture/preprocess/apps/utils/"
-            self.packages = [
-                "pandas",
-                "altair",
-                "scikit-learn",
-                "numpy",
-                "statsmodels",
-                "scipy",
-                "typing_extensions",
-                "utilsforecast"
-            ]
+            self.files_map = files_map or {}
+            self.files = list(self.files_map.keys())
+            self.packages = packages or []
             self.packages_installed = False
             self.files_downloaded = False
 
@@ -66,15 +80,17 @@ async def _():
                 with open(init_file, "w") as f:
                     f.write("# Init for utils package\n")
 
-            for f in self.files:
-                url = self.base_url + f
-                dest_path = os.path.join(self.dest_folder, f)
+            for fname, url in self.files_map.items():
+                dest_path = os.path.join(self.dest_folder, fname)
                 urllib.request.urlretrieve(url, dest_path)
-                print(f"📥 Downloaded {f} to {dest_path}")
+                print(f"📥 Downloaded {fname} to {dest_path}")
 
             self.files_downloaded = True
 
-    utils_manager = UtilsManager()
+    utils_manager = UtilsManager(
+        files_map=UtilsURLs.FILES,
+        packages=UtilsURLs.PACKAGES,
+    )
 
     await utils_manager.install_packages()
     utils_manager.download_files()
@@ -84,6 +100,15 @@ async def _():
 
 @app.cell(hide_code=True)
 def _():
+    import warnings
+    warnings.filterwarnings("ignore")
+    return
+
+
+@app.cell(hide_code=True)
+def _(utils_manager):
+    print("Packages installed:", utils_manager.packages_installed)
+    print("Files downloaded:", utils_manager.files_downloaded)
     from utils.slides import SlideCreator
     from utils.data import DataLoader
     from utils.inventory import SimpleForecastPlotter, SafetyStockPlotter
@@ -97,8 +122,6 @@ def _():
         SlideCreator,
         mo,
     )
-
-
 @app.cell(hide_code=True)
 def _(mo):
     public_dir = (
@@ -106,7 +129,7 @@ def _(mo):
         if str(mo.notebook_location).startswith("https://")
         else "public"
     )
-    return
+    return (public_dir,)
 
 
 @app.cell
@@ -1019,7 +1042,7 @@ def _(mo, sc):
         - Too high reorder point → excess inventory costs  
 
         **The Solution:**  
-        - Keep the EOQ formula for order quantity: $Q^* = \sqrt{\\frac{2DK}{h}}$  
+        - Keep the EOQ formula for order quantity: $Q^* = \sqrt{\\frac{2dK}{h}}$  
         - Modify the reorder point to include **safety stock** for demand uncertainty  
 
         This extension allows us to balance service level (avoiding stockouts) with inventory costs.
@@ -1047,8 +1070,7 @@ def _(mo, sc):
 
         - **Definition:** $\alpha = P(\text{no stockout during lead time})$
         - **Interpretation:** If $\alpha = 0.95$, we expect to avoid stockouts 95% of the time
-        - Simply speaking with $\alpha=0.95$, we will be able to fullfill all of our demand on 95 out of 100 days.
-
+    
         **Key Properties:**  
         -  $\alpha$ is a **period-based** measure (focuses on cycles, not individual units)
         - Higher  $\alpha$ requires more safety stock but reduces stockout frequency
@@ -1060,8 +1082,11 @@ def _(mo, sc):
         $$\alpha = \frac{p}{h + p}$$
 
         **Intuition:**
+
         - When stockout costs are high relative to holding costs, optimal service level approaches 1
+    
         - When holding costs are high relative to stockout costs, optimal service level is lower   
+    
         - This formula provides the cost-optimal balance between service and inventory investment
 
     """)
