@@ -22,10 +22,14 @@ jobs:
           pip install marimo nbformat
 
       - name: Export app as HTML
-        run: marimo export html-wasm apps/demand_management.py -o site/demand_management --mode edit
+        run: |
+          marimo export html-wasm apps/demand_management.py -o site/demand_management --mode edit
+          marimo export html-wasm apps/vehicle_routing.py -o site/vehicle_routing --mode edit
 
       - name: Export app as Jupyter Notebook
-        run: marimo export ipynb apps/demand_management.py -o site/downloads/demand_management.ipynb
+        run: |
+          marimo export ipynb apps/demand_management.py -o site/downloads/demand_management.ipynb
+          marimo export ipynb apps/vehicle_routing.py -o site/downloads/vehicle_routing.ipynb
 
       - name: Upload Pages Artifact
         if: github.ref == 'refs/heads/main'
