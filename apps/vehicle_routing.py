@@ -5,6 +5,7 @@ app = marimo.App(
     width="medium",
     app_title="Vehicle Routing",
     css_file="d3.css",
+    on_startup="autorun",
 )
 
 
@@ -415,7 +416,6 @@ def _(mo):
             slide = self.create_slide(title, layout_type="title", page_number=page_number)
             slide.subtitle = subtitle
             return slide
-
     return (SlideCreator,)
 
 
@@ -680,7 +680,6 @@ def _(DataURLs, pd, pl):
         print(f"Polars parquet failed: {e}, using pandas fallback...")
         df_pharmacies_pd = pd.read_parquet(DataURLs.PHARMACIES)
         df_pharmacies = pl.from_pandas(df_pharmacies_pd)
-
     return df_pharmacies, df_scenarios
 
 
