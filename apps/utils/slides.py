@@ -1,351 +1,408 @@
-
-# slides.py
-# Minimal marimo slide system: fixed 16:9 master, Title + Side-by-Side layouts.
-# Uses mo.Html (capital H) and f-string interpolation (no unsupported kwargs).
-
-from __future__ import annotations
-from dataclasses import dataclass
-from typing import Optional
 import marimo as mo
-import html as _html
 
-# ---- Tunable constants ----------------------------------------------------
-SLIDE_WIDTH = 1280     # px
-SLIDE_HEIGHT = 720      # px  (16:9)
-GAP = 24               # px between columns
-PADDING_X = 24         # px horizontal internal padding
-PADDING_Y = 16         # px vertical internal padding
-TITLE_FONT_SIZE = 28   # px (top headline)
-FOOTER_FONT_SIZE = 12  # px
 
-@dataclass
 class Slide:
-    title: str
-    chair: str
-    course: str
-    presenter: str
-    logo_url: Optional[str]
-    page_number: int
-    layout_type: str = "side-by-side"
-    # Title slide
-    subtitle: Optional[str] = None
-    # Side-by-side content slots
-    content1: Optional[mo.core.MIME] = None
-    content2: Optional[mo.core.MIME] = None
+    def __init__(
+        self,
+        title,
+        slide_number,
+        chair_title="Default Chair Title",
+        lecture_name="Default Lecture Name",
+        layout_type="2-column",
+        presenter="Default Presenter",
+        section="Default Section",
+    ):
+        self.slide_data = {}
+        self.section = section
+        self.layout_type = layout_type
+        self.lecture_name = lecture_name
+        self.presenter = presenter
+        self.title = title
+        self.title_raw = title
+        self.content1 = mo.md("")
+        self.content2 = mo.md("")
+        self.content3 = mo.md("")
+        self.chair_title = chair_title
+        self.slide_number = slide_number
+        self.logo = mo.image(
+            "https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png",
+            width=200,
+        )
+        self.vertical_spacer_height = 800
+        self.horizontal_spacer_width = 1600
 
-    # ---- Sections (as mo.Html wrappers) ----------------------------------
-    def _header(self) -> mo.core.MIME:
-        safe_title = _html.escape(self.title)
-        return mo.Html(
-            f"""
-            <div class="slide-header">
-              <div class="slide-title" style="font-size: {TITLE_FONT_SIZE}px; font-weight: 700; line-height: 1.2; margin: 0;">{safe_title}</div>
-              <div class="slide-hr" style="height: 1px; background: #E5E7EB; margin: 8px 0;"></div>
-            </div>
-            """
+    def get_spacer_horizontal(self, size=None):
+        width = "auto" if size is None else f"{size}px"
+        return mo.md(r"""&nbsp;""").style({"width": width})
+
+    def get_spacer_vertical(self, size=600):
+        height = "auto" if size is None else f"{size}px"
+        return mo.md(r"""&nbsp;""").style({"height": height})
+
+    def get_horizontal_rule(self):
+        return mo.md(
+            f"<div style='width: {self.horizontal_spacer_width}px; height: 1px; background-color: darkgray;'></div>"
         )
 
-    def _footer(self) -> mo.core.MIME:
-        safe_page = _html.escape(str(self.page_number))
-        safe_chair = _html.escape(self.chair)
-        left_html = f"Page {safe_page} &nbsp;&nbsp;|&nbsp;&nbsp; {safe_chair}"
-        center_img = (
-            f'<img class="slide-logo" src="{_html.escape(self.logo_url)}" alt="logo" style="display: block; max-height: 28px; max-width: 160px; margin: 0 auto; object-fit: contain;">'
-            if self.logo_url else "&nbsp;"
-        )
-        return mo.Html(
-            f"""
-            <div class="slide-footer">
-              <div class="slide-hr" style="height: 1px; background: #E5E7EB; margin: 8px 0;"></div>
-              <div class="slide-footer-row" style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;">
-                <div class="slide-footer-left" style="font-size: {FOOTER_FONT_SIZE}px; color: #6B7280; white-space: nowrap;">{left_html}</div>
-                <div class="slide-footer-center">{center_img}</div>
-                <div class="slide-footer-right">&nbsp;</div>
-              </div>
-            </div>
-            """
-        )
+    def get_footer(self, slide_number=0):
+        # Wrap text with HTML span to adjust font size since mo.md doesn't support size arg
+        small = lambda text: f"<span style='font-size:0.7em;'>{text}</span>"
 
-    # ---- Layouts ----------------------------------------------------------
-    def _title_layout(self) -> mo.core.MIME:
-        safe_title = _html.escape(self.title)
-        sub = f'<div class="title-slide-sub" style="font-size: 40px; margin: 0 0 16px 0; color: #374151;">{_html.escape(self.subtitle)}</div>' if self.subtitle else ""
-        body = mo.Html(
-            f"""
-            <div class="slide-body title-center" style="flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; height: 100%;">
-              <div class="title-stack" style="text-align: center;">
-                <div class="title-slide-title" style="font-size: 50px; font-weight: 800; margin: 0 0 8px 0;">{safe_title}</div>
-                {sub}
-                <div class="title-slide-meta" style="font-size: 30px; color: #6B7280;">{_html.escape(self.course)}</div>
-                <div class="title-slide-meta" style="font-size: 22px; color: #6B7280;">{_html.escape(self.presenter)}</div>
-              </div>
-            </div>
-            """
-        )
-        return mo.Html(
-            f"""
-            <div class="slide" style="width: {SLIDE_WIDTH}px; height: {SLIDE_HEIGHT}px; min-width: {SLIDE_WIDTH}px; min-height: {SLIDE_HEIGHT}px; max-width: {SLIDE_WIDTH}px; max-height: {SLIDE_HEIGHT}px; box-sizing: border-box; background: #ffffff; padding: {PADDING_Y}px {PADDING_X}px; display: flex; flex-direction: column; border-radius: 6px; box-shadow: 0 0 0 1px #f3f4f6; overflow: hidden;">
-              {self._header()}
-              {body}
-              {self._footer()}
-            </div>
-            """
-        )
+        if slide_number is not None:
+            return mo.vstack(
+                [
+                    self.get_horizontal_rule(),
+                    mo.hstack(
+                        [
+                            mo.hstack(
+                                [
+                                    mo.md(
+                                        small(f"Page {slide_number}  |  "),
+                                    ),
+                                    mo.md(
+                                        small(f"_{self.chair_title}_  | "),
+                                    ),
+                                    mo.md(
+                                        small(f"_{self.lecture_name}_"),
+                                    ),
+                                ],
+                                gap=0,
+                                justify="start",
+                            ),
+                            mo.vstack([self.logo], gap=0, align="end"),
+                        ],
+                        widths=[0.8, 0.2],
+                    ),
+                ],
+                align="start",
+            )
+        else:
+            return mo.vstack(
+                [
+                    self.get_horizontal_rule(),
+                    mo.hstack(
+                        [
+                            mo.hstack(
+                                [
+                                    mo.md(
+                                        small("Agenda | "),
+                                    ),
+                                    mo.md(
+                                        small(f"_{self.chair_title}_ | "),
+                                    ),
+                                    mo.md(
+                                        small(f"_{self.lecture_name}_"),
+                                    ),
+                                ],
+                                gap=0,
+                                justify="start",
+                            ),
+                            mo.vstack([self.logo], gap=0, align="end"),
+                        ],
+                        widths=[0.8, 0.2],
+                    ),
+                ],
+                align="start",
+            )
 
-    def _one_column_layout(self) -> mo.core.MIME:
-        # Convert strings to mo.md, keep mo.md objects as-is
-        content = mo.md(self.content1) if isinstance(self.content1, str) else (self.content1 or mo.md(""))
+    def render_slide(
+        self, left_width=750, right_width=450, content1=None, content2=None
+    ):
+        title_style = {
+            "width": "100%",
+            "text-align": "left",
+        }  # Ensure full width and left alignment
 
-        # Wrap in vstack but override its styling to remove gaps
-        content_wrapped = mo.vstack([content], gap=0).style({"gap": "0", "margin": "0", "padding": "0"})
+        if self.title != "Agenda":
+            title_content = mo.vstack(
+                [
+                    mo.md(
+                        f"<span style='font-size: 90%; color: gray;'>_{self.section}_</span>"
+                    ),
+                    mo.md(f"# {self.title}").style(title_style),
+                ],
+                align="start",
+            )
+        else:
+            title_content = mo.vstack(
+                [
+                    mo.md(f"<span style='font-size: 90%; color: gray;'>_ _</span>"),
+                    mo.md(f"# {self.title}").style(title_style),
+                ],
+                align="start",
+            )
 
-        # Use mo.Html with single column spanning full width
-        body = mo.Html(
-            f"""
-            <div class="slide-body" style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;">
-                <div class="slide-col tight-md" style="min-height: 0; overflow: auto; padding-right: 2px;">
-                    <style>
-                        ul {{ margin-top: -0.2em !important; }}
-                        .slide-col.tight-md .paragraph {{ margin-block: 0 !important; margin: 0 0 4px 0 !important; font-size: 19px !important; }}
-                        .slide-col.tight-md span.paragraph {{ margin-block: 0 !important; margin: 0 0 4px 0 !important; font-size: 19px !important; }}
-                        li {{ font-size: 19px !important; }}
-                        li * {{ font-size: 19px !important; }}
-                    </style>
-                    {content_wrapped}
-                </div>
-            </div>
-            """
-        )
+        # Generic slide structure
+        def create_slide_content(content, include_footer=True):
+            elements = [
+                self.get_spacer_horizontal(),
+                title_content,
+                self.get_horizontal_rule(),
+                content,
+            ]
+            if include_footer:
+                elements.append(self.get_footer(self.slide_number))
+            return mo.vstack(elements, gap=0, justify="start", align="start")
 
-        return mo.Html(
-            f"""
-            <div class="slide" style="width: {SLIDE_WIDTH}px; height: {SLIDE_HEIGHT}px; min-width: {SLIDE_WIDTH}px; min-height: {SLIDE_HEIGHT}px; max-width: {SLIDE_WIDTH}px; max-height: {SLIDE_HEIGHT}px; box-sizing: border-box; background: #ffffff; padding: {PADDING_Y}px {PADDING_X}px; display: flex; flex-direction: column; border-radius: 6px; box-shadow: 0 0 0 1px #f3f4f6; overflow: hidden;">
-              {self._header()}
-              {body}
-              {self._footer()}
-            </div>
-            """
-        )
+        if self.layout_type == "title-slide":
+            self.section = None
+            content = mo.hstack(
+                [
+                    self.get_spacer_vertical(),
+                    mo.vstack(
+                        [
+                            self.get_spacer_horizontal(),
+                            self.get_spacer_vertical(100),
+                            mo.hstack(
+                                [
+                                    mo.md(
+                                        """<div style='width: 4px; height: 300px; background-color: darkgray;'></div>"""
+                                    ),
+                                    mo.vstack(
+                                        [
+                                            mo.md(
+                                                f"<span style='font-size:2em;'>{self.lecture_name}</span>"
+                                            ),
+                                            mo.md(f"#{self.title_raw}"),
+                                            mo.md(""),
+                                            mo.md(""),
+                                            mo.hstack(
+                                                [
+                                                    mo.vstack(
+                                                        [
+                                                            mo.md(
+                                                                f"{self.presenter} ({self.chair_title})"
+                                                            )
+                                                        ],
+                                                        align="start",
+                                                    ),
+                                                    self.content2,
+                                                ],
+                                                align="center",
+                                                gap=1,
+                                                justify="space-around",
+                                            ),
+                                        ],
+                                        align="start",
+                                    ),
+                                ],
+                                justify="start",
+                                align="start",
+                                gap=5,
+                            ).style({"text-align": "left"}),
+                            self.get_spacer_vertical(100),
+                        ],
+                        gap=0,
+                        justify="start",
+                    ),
+                ]
+            )
+            slide = mo.vstack(
+                [content, mo.vstack([self.logo], gap=0, align="end")], gap=0
+            )
 
-    def _side_by_side_layout(self) -> mo.core.MIME:
-        # Convert strings to mo.md, keep mo.md objects as-is
-        left_content = mo.md(self.content1) if isinstance(self.content1, str) else (self.content1 or mo.md(""))
-        right_content = mo.md(self.content2) if isinstance(self.content2, str) else (self.content2 or mo.md(""))
-
-        # Wrap in vstack but override its styling to remove gaps
-        left = mo.vstack([left_content], gap=0).style({"gap": "0", "margin": "0", "padding": "0"})
-        right = mo.vstack([right_content], gap=0).style({"gap": "0", "margin": "0", "padding": "0"})
-
-        # Use mo.Html with proper nesting and inline styles as fallback
-        body = mo.Html(
-            f"""
-            <div class="slide-body" style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;">
-                <style>
-                    ul {{ margin-top: -0.2em !important; }}
-                    .slide-col.tight-md .paragraph {{ margin-block: 0 !important; margin: 0 0 4px 0 !important; font-size: 19px !important; }}
-                    .slide-col.tight-md span.paragraph {{ margin-block: 0 !important; margin: 0 0 4px 0 !important; font-size: 19px !important; }}
-                    li {{ font-size: 19px !important; }}
-                    li * {{ font-size: 19px !important; }}
-                </style>
-                <div class="slide-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: {GAP}px; height: 100%; min-height: 0;">
-                    <div class="slide-col tight-md" style="min-height: 0; overflow: auto; padding-right: 2px;">
-                        {left}
-                    </div>
-                    <div class="slide-col tight-md" style="min-height: 0; overflow: auto; padding-right: 2px;">
-                        {right}
-                    </div>
-                </div>
-            </div>
-            """
-        )
-
-        return mo.Html(
-            f"""
-            <div class="slide" style="width: {SLIDE_WIDTH}px; height: {SLIDE_HEIGHT}px; min-width: {SLIDE_WIDTH}px; min-height: {SLIDE_HEIGHT}px; max-width: {SLIDE_WIDTH}px; max-height: {SLIDE_HEIGHT}px; box-sizing: border-box; background: #ffffff; padding: {PADDING_Y}px {PADDING_X}px; display: flex; flex-direction: column; border-radius: 6px; box-shadow: 0 0 0 1px #f3f4f6; overflow: hidden;">
-              {self._header()}
-              {body}
-              {self._footer()}
-            </div>
-            """
-        )
-
-    def render(self) -> mo.core.MIME:
-        if self.layout_type == "title":
-            return self._title_layout()
         elif self.layout_type == "1-column":
-            return self._one_column_layout()
-        return self._side_by_side_layout()
+            content = mo.hstack(
+                [self.get_spacer_vertical(), self.content1.style({"width": "100%"})],
+                gap=0,
+                justify="center",
+                align="center",
+            )
+            slide = create_slide_content(content)
+
+        elif self.layout_type == "side-by-side":
+            # Add CSS for compact text spacing (PowerPoint-like)
+            compact_text_style = mo.Html("""
+                <style>
+                    .slide-content-compact p { 
+                        margin: 0.35em 0 !important; 
+                        line-height: 1.5;
+                    }
+                    .slide-content-compact ul { 
+                        margin: 0.4em 0 !important; 
+                        padding-left: 1.5em; 
+                    }
+                    .slide-content-compact ol { 
+                        margin: 0.4em 0 !important; 
+                        padding-left: 1.5em; 
+                    }
+                    .slide-content-compact li { 
+                        margin: 0.2em 0 !important; 
+                        line-height: 1.4;
+                    }
+                    .slide-content-compact h1, 
+                    .slide-content-compact h2, 
+                    .slide-content-compact h3,
+                    .slide-content-compact h4 { 
+                        margin: 0.6em 0 0.3em 0 !important; 
+                    }
+                </style>
+            """)
+            
+            content = mo.vstack([
+                compact_text_style,
+                mo.hstack(
+                    [
+                        self.get_spacer_vertical(),
+                        mo.Html(f"""
+                            <div class="slide-content-compact" style="width: 750px;">
+                                {self.content1}
+                            </div>
+                        """),
+                        mo.Html(f"""
+                            <div class="slide-content-compact" style="width: 700px;">
+                                {self.content2}
+                            </div>
+                        """),
+                    ],
+                    gap=2,
+                    justify="start",
+                    align="start",
+                )
+            ], gap=0)
+            slide = create_slide_content(content)
+
+        elif self.layout_type == "flexible-2-column":
+            content = mo.hstack(
+                [
+                    self.get_spacer_vertical(),
+                    self.content1.style(
+                        {
+                            "width": f"{left_width}px",
+                            "margin-left": "auto",
+                            "margin-right": "auto",
+                        }
+                    ),
+                    self.content2.style(
+                        {
+                            "width": f"{right_width}px",
+                            "margin-left": "auto",
+                            "margin-right": "auto",
+                        }
+                    ),
+                ],
+                gap=0,
+                justify="center",
+                align="center",
+            )
+            slide = create_slide_content(content)
+
+        elif self.layout_type == "2-row":
+            top = self.content1.style({"width": 1600, "height": "50%", "margin-left": "auto", "margin-right": "auto"})
+            bot = self.content2.style({"width": 1600, "height": "50%", "margin-left": "auto", "margin-right": "auto"})
+
+            content = mo.hstack([
+                self.get_spacer_vertical(),
+                mo.vstack([top, bot], gap=2, justify="start", align="stretch")
+            ], gap=0, justify="center", align="center")
+
+            slide = create_slide_content(content)
+
+        elif self.layout_type == "3-row":
+            top = self.content1.style({"width": 1600, "height": "33%", "margin-left": "auto", "margin-right": "auto"})
+            mid = self.content2.style({"width": 1600, "height": "33%", "margin-left": "auto", "margin-right": "auto"})
+            bot = self.content3.style({"width": 1600, "height": "33%", "margin-left": "auto", "margin-right": "auto"})
+
+            content = mo.hstack([
+                self.get_spacer_vertical(),
+                mo.vstack([top, mid, bot], gap=1.5, justify="start", align="stretch")
+            ], gap=0, justify="center", align="center")
+
+            slide = create_slide_content(content)
+
+        else:  # Default layout
+            content = mo.hstack(
+                [
+                    self.get_spacer_vertical(),
+                    self.content1.style(
+                        {
+                            "width": 1600 ,
+                            "margin-left": "auto",
+                            "margin-right": "auto",
+                        }
+                    ),
+                    self.content2.style(
+                        {
+                            "width": 1600,
+                            "margin-left": "auto",
+                            "margin-right": "auto",
+                        }
+                    ),
+                ],
+                gap=0,
+                justify="center",
+                align="center",
+            )
+            slide = create_slide_content(content)
+
+        slide = mo.vstack([slide, mo.Html("""<div class="page-break"></div>""")])
+        return slide
+
+    def get_title_number(self):
+        return (self.title_raw, self.slide_number)
 
 
 class SlideCreator:
-    def __init__(self, chair: str, course: str, presenter: str, logo_url: Optional[str] = None):
-        self.chair = chair
-        self.course = course
+    def __init__(
+        self,
+        chair_title="Default Chair Title",
+        lecture_name="Default Lecture Name",
+        presenter="Default Presenter",
+    ):
+        self.chair_title = chair_title
+        self.lecture_name = lecture_name
         self.presenter = presenter
-        self.logo_url = logo_url
-        self._page_counter = 0
+        self.pages = []
+        self.currentSection = "Default Section"
 
-    # Inject global CSS once near the top of your app
-    def styles(self) -> mo.core.MIME:
-        return mo.Html(
-            f"""
-            <style>
-              :root {{
-                --slide-w: {SLIDE_WIDTH}px;
-                --slide-h: {SLIDE_HEIGHT}px;
-                --gap: {GAP}px;
-                --pad-x: {PADDING_X}px;
-                --pad-y: {PADDING_Y}px;
-                --title-size: {TITLE_FONT_SIZE}px;
-                --footer-size: {FOOTER_FONT_SIZE}px;
-                --border-color: #E5E7EB;
-                --text-muted: #6B7280;
-                --bg: #ffffff;
-              }}
-
-              /* Force slide dimensions in all modes */
-              div.slide,
-              .slide {{
-                width: var(--slide-w) !important;
-                height: var(--slide-h) !important;
-                min-width: var(--slide-w) !important;
-                min-height: var(--slide-h) !important;
-                max-width: var(--slide-w) !important;
-                max-height: var(--slide-h) !important;
-                box-sizing: border-box !important;
-                background: var(--bg) !important;
-                padding: var(--pad-y) var(--pad-x) !important;
-                display: flex !important;
-                flex-direction: column !important;
-                border-radius: 6px;
-                box-shadow: 0 0 0 1px #f3f4f6;
-                overflow: hidden !important;
-              }}
-
-              div.slide-title,
-              .slide-title {{
-                font-size: var(--title-size) !important;
-                font-weight: 700 !important;
-                line-height: 1.2 !important;
-                margin: 0 !important;
-              }}
-
-              div.slide-hr,
-              .slide-hr {{
-                height: 1px !important;
-                background: var(--border-color) !important;
-                margin: 8px 0 !important;
-              }}
-
-              div.slide-body,
-              .slide-body {{
-                flex: 1 1 auto !important;
-                min-height: 0 !important;
-                display: flex !important;
-                flex-direction: column !important;
-              }}
-
-              div.slide-cols,
-              .slide-cols {{
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-                gap: var(--gap) !important;
-                height: 100% !important;
-                min-height: 0 !important;
-              }}
-
-              div.slide-col,
-              .slide-col {{
-                min-height: 0 !important;
-                overflow: auto !important;
-                padding-right: 2px !important;
-              }}
-
-              div.slide-footer div.slide-footer-row,
-              .slide-footer .slide-footer-row {{
-                display: grid !important;
-                grid-template-columns: 1fr auto 1fr !important;
-                align-items: center !important;
-              }}
-
-              div.slide-footer-left,
-              .slide-footer-left {{
-                font-size: var(--footer-size) !important;
-                color: var(--text-muted) !important;
-                white-space: nowrap !important;
-              }}
-
-              img.slide-logo,
-              .slide-logo {{
-                display: block !important;
-                max-height: 28px !important;
-                max-width: 160px !important;
-                margin: 0 auto !important;
-                object-fit: contain !important;
-              }}
-
-              /* Title slide */
-              div.title-center,
-              .title-center {{
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                height: 100% !important;
-              }}
-
-              div.title-stack,
-              .title-stack {{
-                text-align: center !important;
-              }}
-
-              div.title-slide-title,
-              .title-slide-title {{
-                font-size: 40px !important;
-                font-weight: 800 !important;
-                margin: 0 0 8px 0 !important;
-              }}
-
-              div.title-slide-sub,
-              .title-slide-sub {{
-                font-size: 20px !important;
-                margin: 0 0 16px 0 !important;
-                color: #374151 !important;
-              }}
-
-              div.title-slide-meta,
-              .title-slide-meta {{
-                font-size: 16px !important;
-                color: var(--text-muted) !important;
-              }}
-
-              /* Tighter markdown spacing */
-              .tight-md p {{ margin: 0 0 4px 0 !important; }}
-              .tight-md .paragraph {{ margin-block: 0 !important; margin: 0 0 4px 0 !important; display: block !important; font-size: 19px !important; }}
-              .tight-md span.paragraph {{ margin-block: 0 !important; margin: 0 0 4px 0 !important; display: block !important; font-size: 19px !important; }}
-              ul {{ margin-top: -0.2em !important; margin-bottom: 6px !important; margin-left: 1.25em !important; margin-right: 0 !important; }}
-              .tight-md li {{ margin: 2px 0 !important; font-size: 19px !important; }}
-              li {{ font-size: 19px !important; }}
-              li * {{ font-size: 19px !important; }}
-              .tight-md h1, .tight-md h2, .tight-md h3, .tight-md h4 {{ margin: 0 0 6px 0 !important; }}
-            </style>
-            """
-        )
-
-    def create_slide(self, title: str, layout_type: str = "side-by-side", page_number: Optional[int] = None) -> Slide:
-        if page_number is None:
-            self._page_counter += 1
-            page_number = self._page_counter
-        return Slide(
-            title=title,
-            chair=self.chair,
-            course=self.course,
+    def create_slide(self, title, layout_type="2-column", newSection=None):
+        if newSection:
+            self.currentSection = newSection
+        slide = Slide(
+            title,
+            len(self.pages) + 1,
+            chair_title=self.chair_title,
+            lecture_name=self.lecture_name,
             presenter=self.presenter,
-            logo_url=self.logo_url,
-            page_number=page_number,
             layout_type=layout_type,
+            section=self.currentSection,
+        )
+        self.pages.append(slide)
+        return slide
+
+    def create_agenda(self, title="Agenda", currentSection=None):
+        agenda = {}
+        for page in self.pages:
+            if page.section is not None:
+                if page.section not in agenda:
+                    agenda[page.section] = []
+                agenda[page.section].append(page.get_title_number()[0])
+
+        # Creating a slide similar to the title-slide layout
+        agenda_slide = Slide(
+            title,
+            None,
+            chair_title=self.chair_title,
+            lecture_name=self.lecture_name,
+            presenter=self.presenter,
+            layout_type="1-column",
+            section=currentSection or self.currentSection,
         )
 
-    def create_title_slide(self, title: str, subtitle: Optional[str] = None, page_number: Optional[int] = None) -> Slide:
-        slide = self.create_slide(title, layout_type="title", page_number=page_number)
-        slide.subtitle = subtitle
-        return slide
+        # Building the markdown content for agenda
+        agenda_content = ""
+        for section, titles in agenda.items():
+            if currentSection is not None and section == currentSection:
+                agenda_content += f"<span style='background-color:lightblue; font-weight:bold; color:gray; display: inline-block; width: 450px;'>{section}</span>\n\n"
+            else:
+                agenda_content += f"**{section}**\n\n"
+            # if currentSection is not None and section == currentSection:
+            #     for slide_title in titles:
+            #         agenda_content += f"\n &nbsp;&nbsp; <sub>{slide_title}</sub> \n"
+            # agenda_content += "\n \n"
+
+        # Setting the content of the slide
+        agenda_slide.content1 = mo.md(agenda_content)
+
+        self.pages.append(agenda_slide)
+        return agenda_slide.render_slide()
