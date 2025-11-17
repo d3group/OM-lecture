@@ -22,19 +22,19 @@ jobs:
           pip install marimo nbformat
 
       - name: Export demand management app as HTML
-        run: marimo export html-wasm apps/demand_management.py -o site/demand_management --mode edit
+        run: marimo export html-wasm apps/demand_management.py -o site/demand_management --mode run
 
       - name: Export demand management app as Jupyter Notebook
         run: marimo export ipynb apps/demand_management.py -o site/downloads/demand_management.ipynb
 
       - name: Export inventory management app as HTML
-        run: marimo export html-wasm apps/inventory_management.py -o site/inventory_management --mode edit
+        run: marimo export html-wasm apps/inventory_management.py -o site/inventory_management --mode run
 
       - name: Export inventory management app as Jupyter Notebook
         run: marimo export ipynb apps/inventory_management.py -o site/downloads/inventory_management.ipynb
 
       - name: Export vehicle routing app as HTML
-        run: MARIMO_OUTPUT_MAX_BYTES=20000000 marimo export html-wasm apps/vehicle_routing.py -o site/vehicle_routing --mode edit
+        run: MARIMO_OUTPUT_MAX_BYTES=20000000 marimo export html-wasm apps/vehicle_routing.py -o site/vehicle_routing --mode run
 
       - name: Export vehicle routing app as Jupyter Notebook
         run: marimo export ipynb apps/vehicle_routing.py -o site/downloads/vehicle_routing.ipynb
