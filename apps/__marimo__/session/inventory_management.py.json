@@ -1,0 +1,735 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.18.0"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "6ebd9bd5edd8c45cc8e4cc7c719de3d5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "fa2fcd956e93b4ee5f9d364e30e683ea",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Installing pandas...\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "pandas was not installed: micropip is only available in WASM notebooks.",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Installing altair...\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "altair was not installed: micropip is only available in WASM notebooks.",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Installing scikit-learn...\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "scikit-learn was not installed: micropip is only available in WASM notebooks.",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Installing numpy...\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "numpy was not installed: micropip is only available in WASM notebooks.",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Installing statsmodels...\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "statsmodels was not installed: micropip is only available in WASM notebooks.",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Installing scipy...\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "scipy was not installed: micropip is only available in WASM notebooks.",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Installing typing_extensions...\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "typing_extensions was not installed: micropip is only available in WASM notebooks.",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Installing utilsforecast...\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "utilsforecast was not installed: micropip is only available in WASM notebooks.",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "\u2705 All packages installed.\n\ud83d\udce5 Downloaded data.py to utils/data.py\n\ud83d\udce5 Downloaded forecast.py to utils/forecast.py\n\ud83d\udce5 Downloaded slides.py to utils/slides.py\n\ud83d\udce5 Downloaded inventory.py to utils/inventory.py\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "vblA",
+      "code_hash": "73c809a6df8e9e842007e81e84cf0eaf",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "ee7074280ee6572b890b2e8033477e35",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Packages installed: True\nFiles downloaded: True\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "88f23abe6ccf1bc1297eb6f5bfac31ca",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "964130f6551afe35e194a9f0e3cda76f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "554e895f2202b966a7c03a6334ccc57c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "ddf90ebc00771a2da144982446f81cca",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "2df0162f6fb913223a9d421aa2205adc",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='height:100px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='text-align:left'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 4px; height: 300px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:2em;'>Operations Management</span></span></span><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"inventory-management-basics-and-intuition\">Inventory Management - Basics and Intuition</h1></span><span class=\"markdown prose dark:prose-invert contents\"></span><span class=\"markdown prose dark:prose-invert contents\"></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-around;align-items: center;flex-wrap: nowrap;gap: 1rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Richard Pibernik, Moritz Beck (Chair of Logistics and Quantitative Methods)</span></span></div><span class=\"markdown prose dark:prose-invert contents\"></span></div></div></div></div><div style='height:100px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "309aa1b1cf3062ca77b27322a3d117f8",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "2d767d8fec06b560521ca259f57cfa73",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "be2bb0d5e239ff95e4394e62a5c83510",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "21828927c7f234250ca23f1bd363ec04",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "bb0ed4ed0067f8702e9c4d75e48b6a1a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "c0b21b025ca2c6b9dc34f7ff15a4f8fa",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "0cb97c49ff00902c4584157eaa9ec82b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "57a8d714d5be2037cc5e7dda62a0f3d8",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "c9b9c55722e2defefabd7a978788a7d3",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "32e55aa662953ee17ce58177e2108eb2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "c751b41eac1bb210e3bcf9f6f81ac8e7",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "722e1fc318adf7fb1f22e47e5ab4ba4b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "494dbc8fecdfec04be9ea696c86eb3d6",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "3eea97a4d8410da2c052fe086e4faa35",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size: 90%; color: gray;'><em>Inventory Management - Basics and Intuition</em></span></span></span><div style='width:100%;text-align:left'><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"formalizing-the-cost-trade-off\">Formalizing the Cost Trade-off</h1></span></div></div><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: center;align-items: center;flex-wrap: nowrap;gap: 0rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='width:100%'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">To formalize the  inventory management problem, we define the following:</span>\n<ul>\n<li>\n<span class=\"paragraph\"><strong>Decision Variables:</strong> </span>\n<ul>\n<li><marimo-tex class=\"arithmatex\">||(Q_t||)</marimo-tex>: Quantity ordered at the beginning of day <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex>  </li>\n<li><marimo-tex class=\"arithmatex\">||(I_t||)</marimo-tex>: Inventory level at the end of day <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex></li>\n</ul>\n</li>\n<li>\n<span class=\"paragraph\"><strong>Inventory Dynamics:</strong></span>\n<ul>\n<li>Inventory at the end of day <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex> is given by:</li>\n</ul>\n<marimo-tex class=\"arithmatex\">||[\n    I_t = I_{t-1} + Q_{t-L} - D_t\n||]</marimo-tex><ul>\n<li>where <marimo-tex class=\"arithmatex\">||(D_t||)</marimo-tex> is the demand on day <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(L||)</marimo-tex> is the lead time (2 days in this case).</li>\n<li>If <marimo-tex class=\"arithmatex\">||(I_t &lt; 0||)</marimo-tex>, it indicates a stockout, meaning demand exceeds available inventory.  </li>\n<li>In this case, we cannot fulfill the demand and the demand is backordered.</li>\n</ul>\n</li>\n</ul></span></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='flex: 0.8'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'>Page 2  |  </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Chair of Logistics and Quantitative Methods</em>  | </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Operations Management</em></span></span></span></div></div><div style='flex: 0.2'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div></div></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Pvdt",
+      "code_hash": "640dc5bcb132be78434744d8161f946b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ZBYS",
+      "code_hash": "6898d151d2c492e39813f48a1bc0e246",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "aLJB",
+      "code_hash": "b980abefdfd496ff21b62897a94b9701",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nHfw",
+      "code_hash": "e5ecc3a8a2e7337d80394f3368db9ade",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "xXTn",
+      "code_hash": "b2988e98c69a87a4c36d86820bbbb277",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "AjVT",
+      "code_hash": "e459b898a62d86159bbfa53135bcc812",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "pHFh",
+      "code_hash": "e4ba1c92616f8b3056e65cddb0981a0a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "NCOB",
+      "code_hash": "a6214688f274c97455bfa71862c91467",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "aqbW",
+      "code_hash": "b51a26e830e9add562a468b250071ca7",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TRpd",
+      "code_hash": "8f4e1e51bdba3ba6a934219178213aaf",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TXez",
+      "code_hash": "dc98ee2c264b7f6f7585ec8a00276165",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "dNNg",
+      "code_hash": "500684e77c34158f46d5772a3c85c98f",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "yCnT",
+      "code_hash": "4ad1b849dba7893cb065bd8d2f704f9c",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "wlCL",
+      "code_hash": "4238e8e85bb45fa60e40b474f1e15f27",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "kqZH",
+      "code_hash": "a3c28762a4ab90f822c55c5b9704bef9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "wAgl",
+      "code_hash": "301d1c9f53b14ef3bdfc5f0dfb1c4b16",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "rEll",
+      "code_hash": "0342390df6996ba52886a4cdb46b4631",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "dGlV",
+      "code_hash": "b18dd8afd72494700d075075ee91b2fe",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "SdmI",
+      "code_hash": "db3b8e6b738c98ddf2be3d36f35fb508",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lgWD",
+      "code_hash": "140f4c5d9b01adf7be46c3634c3f150d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "yOPj",
+      "code_hash": "c79683ccc1b289bfed567f04a448664f",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "fwwy",
+      "code_hash": "08e1be6d0b79d42f31906b41bf740216",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "LJZf",
+      "code_hash": "cae8ce3c1572ff96d5e5c689e5401cef",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "urSm",
+      "code_hash": "6527da9a7008f6743362ad1eeb109377",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "jxvo",
+      "code_hash": "22dacf14702b867818c45ae52b9f453d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "mWxS",
+      "code_hash": "b4d0502621df9b44ced24b1a976bdec2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "CcZR",
+      "code_hash": "b33925f6659e06e1ad7c55a7d3dcc5e3",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "YWSi",
+      "code_hash": "233ec923cd4721a8a9e5c8627f5b323d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "zlud",
+      "code_hash": "06a3c990329ca7fcdaa1bd6947dbebbb",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "tZnO",
+      "code_hash": "a678dd7a78df7bdacd9b06683fe1342b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "xvXZ",
+      "code_hash": "5a348b498b31af6b4527a0fe5b429271",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "CLip",
+      "code_hash": "78427b7738bb52c94201b994db56e9cd",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "YECM",
+      "code_hash": "96db8172582cc5239344ebd1e7b9f18f",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "cEAS",
+      "code_hash": "d613f8edf92fff477d202a7978e59d01",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "iXej",
+      "code_hash": "499d47a597b80f83fac3c5b9f393066b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "EJmg",
+      "code_hash": "e0f66ec03954206cef76787c71533570",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "UmEG",
+      "code_hash": "fd9bfee0dfea0b39f60aea6d1ebbbb58",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "vEBW",
+      "code_hash": "0ec6bc465ea8840878a5d7c272778bb7",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "kLmu",
+      "code_hash": "9eba056ba1ed37a3c6be7d3bfb62ac43",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "IpqN",
+      "code_hash": "a264afe7e8bf65343761e4644f522cab",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "dxZZ",
+      "code_hash": "c8db513595eda4b71dcb14f45e8b6d0e",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "dlnW",
+      "code_hash": "0bcdfec7342ef827d65a9427a2b53312",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TTti",
+      "code_hash": "607488d31c9352cb33b1f61d3e9d6de9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "RKFZ",
+      "code_hash": "6ec57969436aa094775eea8599e6f7e3",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "IaQp",
+      "code_hash": "3ed466edd37954f24d6eeba0b42b549b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "IWgg",
+      "code_hash": "d28a996e493ee0bd54b5c9699c8b63ff",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "fCoF",
+      "code_hash": "8c6d5fde51210616687baca1cb1ad98c",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "LkGn",
+      "code_hash": "94027df0f384a5d1b7adac6e75369e90",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "zVRe",
+      "code_hash": "875cdc103639556bdfb2b86fbece4f49",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "woaO",
+      "code_hash": "61f2d744685072b18ac60bf3991388b7",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "HnMC",
+      "code_hash": "a1ed9d8f3f68c2aca53522123479d615",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "wadT",
+      "code_hash": "e8cef1c58b75d929b4930e49384ac2b9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "VCRE",
+      "code_hash": "15e885005e855e2f850750d3c3d50f90",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "hgqU",
+      "code_hash": "703d70fe5aa853d182d511b79ab26c15",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PSUk",
+      "code_hash": "3f6fae6f07dda16e85d936c4121cf04d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "mfOT",
+      "code_hash": "acf29509172de979dbe2a8d3c8e1c384",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "vGiW",
+      "code_hash": "5e43824ab388f4ecd38f6e0d7972d859",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "SYQT",
+      "code_hash": "7b86ba740abcb6eb1286d7d92cbcb929",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "bMrW",
+      "code_hash": "e778668d00ef1b6462653c268497a96a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PSQn",
+      "code_hash": "9acbd3dcbaa99313a3ce2f514732d175",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "OfTS",
+      "code_hash": "1733ef51b6ce075a0b101793506e4ba8",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lQxp",
+      "code_hash": "e5fb2ce2c7c2501eb4f5a19899f845b1",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Plbk",
+      "code_hash": "1dad1aca5d9596f5bf8f9599a83133f4",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "rSYo",
+      "code_hash": "4c07f7d94260d5412c7c772986ff32e4",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "HuZB",
+      "code_hash": "29623714537c61ba4f4a9432deb9c509",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "WfYj",
+      "code_hash": "f9f464f31dc4f53f02bc5b87a6502571",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Ynfw",
+      "code_hash": "1f59961ab330d0519eb466e7c0f97370",
+      "outputs": [],
+      "console": []
+    }
+  ]
+}

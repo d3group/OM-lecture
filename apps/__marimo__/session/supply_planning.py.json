@@ -1,0 +1,440 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.18.0"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "c4f8932b2e51d2efa8960a7f8d88715f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "2b8d47ead7acfeabf786129910f4a981",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "\u2705 Package pandas is already installed.\n\u2705 Package altair is already installed.\n\u26a0\ufe0f Import for scikit-learn failed (No module named 'scikit-learn'). Will attempt to install.\n\u2705 Package numpy is already installed.\n\u2705 Package statsmodels is already installed.\n\u2705 Package scipy is already installed.\n\u2705 Package typing_extensions is already installed.\n\u2705 Package utilsforecast is already installed.\nInstalling scikit-learn with pip...\nRequirement already satisfied: scikit-learn in /opt/anaconda3/lib/python3.12/site-packages (1.7.2)\nRequirement already satisfied: numpy>=1.22.0 in /opt/anaconda3/lib/python3.12/site-packages (from scikit-learn) (1.26.4)\nRequirement already satisfied: scipy>=1.8.0 in /opt/anaconda3/lib/python3.12/site-packages (from scikit-learn) (1.15.3)\nRequirement already satisfied: joblib>=1.2.0 in /opt/anaconda3/lib/python3.12/site-packages (from scikit-learn) (1.5.2)\nRequirement already satisfied: threadpoolctl>=3.1.0 in /opt/anaconda3/lib/python3.12/site-packages (from scikit-learn) (3.5.0)\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "\n[notice] A new release of pip is available: 25.1.1 -> 25.3\n[notice] To update, run: pip install --upgrade pip\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "\u2705 All packages installed.\n\ud83d\udce5 Downloaded data.py to utils/data.py\n\ud83d\udce5 Downloaded forecast.py to utils/forecast.py\n\ud83d\udce5 Downloaded slides.py to utils/slides.py\n\ud83d\udce5 Downloaded inventory.py to utils/inventory.py\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "vblA",
+      "code_hash": "73c809a6df8e9e842007e81e84cf0eaf",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "9e73c0d796246361c0bf985217b0b217",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Packages installed: True\nFiles downloaded: True\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "88f23abe6ccf1bc1297eb6f5bfac31ca",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "5babac4bed5fb803081fecd2802e2f11",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "554e895f2202b966a7c03a6334ccc57c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "b37e547bbf97c476c267703626e5cb85",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "2df0162f6fb913223a9d421aa2205adc",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='height:100px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='text-align:left'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 4px; height: 300px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:2em;'>Operations Management</span></span></span><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"supply-planning-from-inventory-planning-to-purchase-requisitions-mrp\">Supply Planning: From Inventory Planning to Purchase Requisitions (MRP)</h1></span><span class=\"markdown prose dark:prose-invert contents\"></span><span class=\"markdown prose dark:prose-invert contents\"></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-around;align-items: center;flex-wrap: nowrap;gap: 1rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Richard Pibernik, Moritz Beck, Anh-Duy Pham (Chair of Logistics and Quantitative Methods)</span></span></div><span class=\"markdown prose dark:prose-invert contents\"></span></div></div></div></div><div style='height:100px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "0e8ef399522a11d33f05a1088d4e4c80",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "3e15239376cdfafb3fd35bdd02ffa84d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size: 90%; color: gray;'><em> </em></span></span></span><div style='width:100%;text-align:left'><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"step-1-from-inventory-planning-in-one-dc-to-gross-requirements-for-phoenix\">Step 1: From Inventory Planning in one DC to Gross Requirements for Phoenix</h1></span></div></div><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: center;align-items: center;flex-wrap: nowrap;gap: 0rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='width:100%'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">- In Chapter 3 you learned how Phoenix\u2019s DC in F\u00fcrth plans its inventory using a <strong>(Q, R) policy</strong>. The same planning logic runs in all other <strong>16 Phoenix DCs</strong>.</span>\n<span class=\"paragraph\">- By knowing each DC\u2019s (Q, R) parameters, and forecasted daily demand, we can <strong>anticipate how much each DC will order</strong> from the central warehouse. We now want to aggregate these demands to know how much of the product we have to ship from our central warehouse to the DCs. </span>\n<span class=\"paragraph\">- We typically look ahead over a horizon greater than the supplier lead time (e.g., the lead time of Ratiopharm for Amoxicillin 500). Let\u2019s assume that the supplier lead time is rather short (3 days) and that we look at the next two weeks (10 days).</span>\n<span class=\"paragraph\"><strong>Gross requirements over the horizon:</strong></span>\n<marimo-tex class=\"arithmatex\">||[\nGR_t = \\sum_{i=1}^{17} Q_{i,t} \\quad   t = 1,\\ldots,10  \n||]</marimo-tex><span class=\"paragraph\">where <marimo-tex class=\"arithmatex\">||(Q_{i,t}||)</marimo-tex> is the planned order of <marimo-tex class=\"arithmatex\">||(DC_i||)</marimo-tex> on day <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex></span></span></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='flex: 0.8'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'>Page 2  |  </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Chair of Logistics and Quantitative Methods</em>  | </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Operations Management</em></span></span></span></div></div><div style='flex: 0.2'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div></div></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "026908f988e64b70ff6491702eac8588",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "18afa62e396ddc93fa903817e215d6f5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size: 90%; color: gray;'><em> </em></span></span></span><div style='width:100%;text-align:left'><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"step-1-from-inventory-planning-in-one-dc-to-gross-requirements-for-phoenix\">Step 1: From Inventory Planning in one DC to Gross Requirements for Phoenix</h1></span></div></div><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: center;align-items: center;flex-wrap: nowrap;gap: 0rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='width:100%'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><marimo-ui-element object-id='emfo-0' random-id='f9d447c1-df5e-473e-5162-af93cd0a8ca6'><marimo-table data-initial-value='[]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Individual DC Orders&lt;/span&gt;&lt;/span&gt;&quot;' data-data='&quot;[{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-06&#92;&quot;,&#92;&quot;DC1&#92;&quot;:0,&#92;&quot;DC2&#92;&quot;:0,&#92;&quot;DC3&#92;&quot;:0,&#92;&quot;DC4&#92;&quot;:0,&#92;&quot;DC5&#92;&quot;:0,&#92;&quot;DC6&#92;&quot;:0,&#92;&quot;DC7&#92;&quot;:0,&#92;&quot;DC8&#92;&quot;:0,&#92;&quot;DC9&#92;&quot;:0,&#92;&quot;DC10&#92;&quot;:0,&#92;&quot;DC11&#92;&quot;:0,&#92;&quot;DC12&#92;&quot;:0,&#92;&quot;DC13&#92;&quot;:0,&#92;&quot;DC14&#92;&quot;:0,&#92;&quot;DC15&#92;&quot;:0,&#92;&quot;DC16&#92;&quot;:0},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-07&#92;&quot;,&#92;&quot;DC1&#92;&quot;:146,&#92;&quot;DC2&#92;&quot;:126,&#92;&quot;DC3&#92;&quot;:152,&#92;&quot;DC4&#92;&quot;:144,&#92;&quot;DC5&#92;&quot;:80,&#92;&quot;DC6&#92;&quot;:94,&#92;&quot;DC7&#92;&quot;:90,&#92;&quot;DC8&#92;&quot;:88,&#92;&quot;DC9&#92;&quot;:156,&#92;&quot;DC10&#92;&quot;:118,&#92;&quot;DC11&#92;&quot;:140,&#92;&quot;DC12&#92;&quot;:154,&#92;&quot;DC13&#92;&quot;:152,&#92;&quot;DC14&#92;&quot;:94,&#92;&quot;DC15&#92;&quot;:142,&#92;&quot;DC16&#92;&quot;:94},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-08&#92;&quot;,&#92;&quot;DC1&#92;&quot;:0,&#92;&quot;DC2&#92;&quot;:0,&#92;&quot;DC3&#92;&quot;:0,&#92;&quot;DC4&#92;&quot;:0,&#92;&quot;DC5&#92;&quot;:0,&#92;&quot;DC6&#92;&quot;:0,&#92;&quot;DC7&#92;&quot;:0,&#92;&quot;DC8&#92;&quot;:0,&#92;&quot;DC9&#92;&quot;:0,&#92;&quot;DC10&#92;&quot;:0,&#92;&quot;DC11&#92;&quot;:0,&#92;&quot;DC12&#92;&quot;:0,&#92;&quot;DC13&#92;&quot;:0,&#92;&quot;DC14&#92;&quot;:0,&#92;&quot;DC15&#92;&quot;:0,&#92;&quot;DC16&#92;&quot;:0},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-09&#92;&quot;,&#92;&quot;DC1&#92;&quot;:146,&#92;&quot;DC2&#92;&quot;:126,&#92;&quot;DC3&#92;&quot;:152,&#92;&quot;DC4&#92;&quot;:144,&#92;&quot;DC5&#92;&quot;:0,&#92;&quot;DC6&#92;&quot;:94,&#92;&quot;DC7&#92;&quot;:90,&#92;&quot;DC8&#92;&quot;:88,&#92;&quot;DC9&#92;&quot;:156,&#92;&quot;DC10&#92;&quot;:118,&#92;&quot;DC11&#92;&quot;:140,&#92;&quot;DC12&#92;&quot;:154,&#92;&quot;DC13&#92;&quot;:152,&#92;&quot;DC14&#92;&quot;:94,&#92;&quot;DC15&#92;&quot;:142,&#92;&quot;DC16&#92;&quot;:94},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-10&#92;&quot;,&#92;&quot;DC1&#92;&quot;:0,&#92;&quot;DC2&#92;&quot;:0,&#92;&quot;DC3&#92;&quot;:0,&#92;&quot;DC4&#92;&quot;:0,&#92;&quot;DC5&#92;&quot;:80,&#92;&quot;DC6&#92;&quot;:0,&#92;&quot;DC7&#92;&quot;:0,&#92;&quot;DC8&#92;&quot;:0,&#92;&quot;DC9&#92;&quot;:0,&#92;&quot;DC10&#92;&quot;:0,&#92;&quot;DC11&#92;&quot;:0,&#92;&quot;DC12&#92;&quot;:0,&#92;&quot;DC13&#92;&quot;:0,&#92;&quot;DC14&#92;&quot;:0,&#92;&quot;DC15&#92;&quot;:0,&#92;&quot;DC16&#92;&quot;:0},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-11&#92;&quot;,&#92;&quot;DC1&#92;&quot;:146,&#92;&quot;DC2&#92;&quot;:126,&#92;&quot;DC3&#92;&quot;:152,&#92;&quot;DC4&#92;&quot;:144,&#92;&quot;DC5&#92;&quot;:80,&#92;&quot;DC6&#92;&quot;:94,&#92;&quot;DC7&#92;&quot;:90,&#92;&quot;DC8&#92;&quot;:88,&#92;&quot;DC9&#92;&quot;:156,&#92;&quot;DC10&#92;&quot;:118,&#92;&quot;DC11&#92;&quot;:140,&#92;&quot;DC12&#92;&quot;:154,&#92;&quot;DC13&#92;&quot;:152,&#92;&quot;DC14&#92;&quot;:94,&#92;&quot;DC15&#92;&quot;:142,&#92;&quot;DC16&#92;&quot;:0},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-12&#92;&quot;,&#92;&quot;DC1&#92;&quot;:0,&#92;&quot;DC2&#92;&quot;:0,&#92;&quot;DC3&#92;&quot;:0,&#92;&quot;DC4&#92;&quot;:0,&#92;&quot;DC5&#92;&quot;:0,&#92;&quot;DC6&#92;&quot;:0,&#92;&quot;DC7&#92;&quot;:0,&#92;&quot;DC8&#92;&quot;:0,&#92;&quot;DC9&#92;&quot;:156,&#92;&quot;DC10&#92;&quot;:0,&#92;&quot;DC11&#92;&quot;:0,&#92;&quot;DC12&#92;&quot;:154,&#92;&quot;DC13&#92;&quot;:0,&#92;&quot;DC14&#92;&quot;:0,&#92;&quot;DC15&#92;&quot;:0,&#92;&quot;DC16&#92;&quot;:94},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-13&#92;&quot;,&#92;&quot;DC1&#92;&quot;:146,&#92;&quot;DC2&#92;&quot;:126,&#92;&quot;DC3&#92;&quot;:152,&#92;&quot;DC4&#92;&quot;:144,&#92;&quot;DC5&#92;&quot;:80,&#92;&quot;DC6&#92;&quot;:94,&#92;&quot;DC7&#92;&quot;:90,&#92;&quot;DC8&#92;&quot;:88,&#92;&quot;DC9&#92;&quot;:0,&#92;&quot;DC10&#92;&quot;:118,&#92;&quot;DC11&#92;&quot;:140,&#92;&quot;DC12&#92;&quot;:0,&#92;&quot;DC13&#92;&quot;:152,&#92;&quot;DC14&#92;&quot;:0,&#92;&quot;DC15&#92;&quot;:142,&#92;&quot;DC16&#92;&quot;:0},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-14&#92;&quot;,&#92;&quot;DC1&#92;&quot;:0,&#92;&quot;DC2&#92;&quot;:0,&#92;&quot;DC3&#92;&quot;:152,&#92;&quot;DC4&#92;&quot;:0,&#92;&quot;DC5&#92;&quot;:0,&#92;&quot;DC6&#92;&quot;:0,&#92;&quot;DC7&#92;&quot;:0,&#92;&quot;DC8&#92;&quot;:0,&#92;&quot;DC9&#92;&quot;:0,&#92;&quot;DC10&#92;&quot;:0,&#92;&quot;DC11&#92;&quot;:140,&#92;&quot;DC12&#92;&quot;:154,&#92;&quot;DC13&#92;&quot;:0,&#92;&quot;DC14&#92;&quot;:94,&#92;&quot;DC15&#92;&quot;:0,&#92;&quot;DC16&#92;&quot;:0},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-15&#92;&quot;,&#92;&quot;DC1&#92;&quot;:146,&#92;&quot;DC2&#92;&quot;:126,&#92;&quot;DC3&#92;&quot;:0,&#92;&quot;DC4&#92;&quot;:144,&#92;&quot;DC5&#92;&quot;:80,&#92;&quot;DC6&#92;&quot;:94,&#92;&quot;DC7&#92;&quot;:90,&#92;&quot;DC8&#92;&quot;:88,&#92;&quot;DC9&#92;&quot;:156,&#92;&quot;DC10&#92;&quot;:118,&#92;&quot;DC11&#92;&quot;:0,&#92;&quot;DC12&#92;&quot;:0,&#92;&quot;DC13&#92;&quot;:152,&#92;&quot;DC14&#92;&quot;:94,&#92;&quot;DC15&#92;&quot;:142,&#92;&quot;DC16&#92;&quot;:94}]&quot;' data-total-rows='20' data-total-columns='17' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='true' data-page-size='10' data-field-types='[[&quot;Date&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;DC1&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC2&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC3&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC4&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC5&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC6&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC7&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC8&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC9&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC10&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC11&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC12&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC13&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC14&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC15&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;DC16&quot;,[&quot;integer&quot;,&quot;int64&quot;]]]' data-show-filters='true' data-show-download='true' data-show-column-summaries='true' data-show-data-types='true' data-show-page-size-selector='true' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-has-stable-row-id='false' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element><marimo-ui-element object-id='emfo-1' random-id='24b7f9e7-ef0a-84a3-8564-a47964558864'><marimo-table data-initial-value='[]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Then we aggregate the order quantities of the 16 DCs to get the total GR at the central warebouse.&lt;/span&gt;&lt;/span&gt;&quot;' data-data='&quot;[{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-06&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:0},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-07&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:1970},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-08&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:0},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-09&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:1890},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-10&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:80},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-11&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:1876},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-12&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:404},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-13&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:1472},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-14&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:540},{&#92;&quot;Date&#92;&quot;:&#92;&quot;2025-05-15&#92;&quot;,&#92;&quot;Order_Placed_Qty&#92;&quot;:1524}]&quot;' data-total-rows='20' data-total-columns='2' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='true' data-page-size='10' data-field-types='[[&quot;Date&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Order_Placed_Qty&quot;,[&quot;integer&quot;,&quot;int64&quot;]]]' data-show-filters='true' data-show-download='true' data-show-column-summaries='true' data-show-data-types='true' data-show-page-size-selector='true' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-has-stable-row-id='false' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element></div></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='flex: 0.8'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'>Page 3  |  </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Chair of Logistics and Quantitative Methods</em>  | </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Operations Management</em></span></span></span></div></div><div style='flex: 0.2'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div></div></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "8cf045fa0d9244bb4252d04cff0d80f7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "Mismatched version of altair: expected >=5.3.0, got 5.0.1. Some features may not work correctly.",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "iLit",
+      "code_hash": "2e79528562a170631121f1341f5052b6",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size: 90%; color: gray;'><em> </em></span></span></span><div style='width:100%;text-align:left'><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"step-1-from-inventory-planning-in-one-dc-to-gross-requirements-for-phoenix\">Step 1: From Inventory Planning in one DC to Gross Requirements for Phoenix</h1></span></div></div><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: center;align-items: center;flex-wrap: nowrap;gap: 0rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: stretch;flex-wrap: nowrap;gap: 2rem'><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Gross Requirements (<marimo-tex class=\"arithmatex\">||(GR_t||)</marimo-tex>)</strong> represent the total demand for an item in each period.</span>\n<span class=\"paragraph\">In our case, this is the aggregated order quantity from all distribution centers.</span>\n<marimo-tex class=\"arithmatex\">||[GR_t = \\sum_{i=1}^{17} Q_{i,t}||]</marimo-tex><span class=\"paragraph\">The chart below shows demand patterns over time, with peak periods highlighted.</span></span></div><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><marimo-ui-element object-id='nWHF-0' random-id='dbcc0cf7-6923-bb28-610e-0280f3861eb3'><marimo-vega data-initial-value='{}' data-label='null' data-spec='{&quot;config&quot;:{&quot;view&quot;:{&quot;continuousWidth&quot;:300,&quot;continuousHeight&quot;:300,&quot;strokeWidth&quot;:0},&quot;axis&quot;:{&quot;grid&quot;:true,&quot;gridOpacity&quot;:0.3}},&quot;layer&quot;:[{&quot;mark&quot;:{&quot;type&quot;:&quot;bar&quot;},&quot;encoding&quot;:{&quot;color&quot;:{&quot;condition&quot;:{&quot;test&quot;:&quot;datum.Is_Peak&quot;,&quot;value&quot;:&quot;#e74c3c&quot;},&quot;value&quot;:&quot;#3498db&quot;},&quot;tooltip&quot;:[{&quot;field&quot;:&quot;Date&quot;,&quot;format&quot;:&quot;%Y-%m-%d&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},{&quot;field&quot;:&quot;Demand&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Demand&quot;,&quot;type&quot;:&quot;quantitative&quot;}],&quot;x&quot;:{&quot;axis&quot;:{&quot;labelAngle&quot;:-45},&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Demand&quot;,&quot;title&quot;:&quot;Gross Requirements (Units)&quot;,&quot;type&quot;:&quot;quantitative&quot;}},&quot;title&quot;:&quot;Demand Over Time (Peak Periods in Red)&quot;},{&quot;mark&quot;:{&quot;type&quot;:&quot;text&quot;,&quot;dy&quot;:-5,&quot;fontSize&quot;:10},&quot;encoding&quot;:{&quot;text&quot;:{&quot;field&quot;:&quot;Demand&quot;,&quot;format&quot;:&quot;,&quot;,&quot;type&quot;:&quot;quantitative&quot;},&quot;x&quot;:{&quot;field&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Demand&quot;,&quot;type&quot;:&quot;quantitative&quot;}}}],&quot;data&quot;:{&quot;url&quot;:&quot;./@file/2410-199074-mrRz6l6L.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;height&quot;:300,&quot;width&quot;:600,&quot;&#36;schema&quot;:&quot;https://vega.github.io/schema/vega-lite/v5.8.0.json&quot;}' data-chart-selection='true' data-field-selection='true'></marimo-vega></marimo-ui-element></div></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='flex: 0.8'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'>Page 4  |  </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Chair of Logistics and Quantitative Methods</em>  | </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Operations Management</em></span></span></span></div></div><div style='flex: 0.2'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div></div></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "4ee7cbebcb148c6b5cb83978650b292d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "Mismatched version of altair: expected >=5.3.0, got 5.0.1. Some features may not work correctly.",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "f703d190929552ed8f58fd8e081bc30a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size: 90%; color: gray;'><em> </em></span></span></span><div style='width:100%;text-align:left'><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"step-2-inventory-netting-projected-on-hand-inventory\">Step 2: Inventory Netting (Projected On-Hand Inventory)</h1></span></div></div><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: center;align-items: center;flex-wrap: nowrap;gap: 0rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: stretch;flex-wrap: nowrap;gap: 2rem'><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Today (at time <strong>t = 1</strong>) we have inventory in our central warehouse.\nThis is the <strong>on-hand inventory</strong>, denoted\n<marimo-tex class=\"arithmatex\">||(<marimo-tex class=\"arithmatex\">||(I_0^{central}||)</marimo-tex>||)</marimo-tex></span>\n<span class=\"paragraph\">We also have <strong>purchase orders to suppliers</strong> that were placed in earlier days.\nThese orders will <strong>arrive in future periods</strong> (e.g., at <marimo-tex class=\"arithmatex\">||(t+1, t+2, ...||)</marimo-tex>).\nWe call these <strong>planned receipts</strong>:\n<marimo-tex class=\"arithmatex\">||(<marimo-tex class=\"arithmatex\">||(PR_t||)</marimo-tex>||)</marimo-tex></span>\n<span class=\"paragraph\">Using the <strong>gross requirements</strong> from Step 1 (the DC demand), and the <strong>planned receipts</strong>,</span>\n<span class=\"paragraph\">we can compute the <strong>projected on-hand inventory</strong> for each future period.</span>\n<span class=\"paragraph\">The projection follows the standard MRP netting equation:\n<marimo-tex class=\"arithmatex\">||(<marimo-tex class=\"arithmatex\">||(I_t^{central} = I_{t-1}^{central} + PR_t - GR_t \\quad \\text{for } t = 1, ..., 20||)</marimo-tex>||)</marimo-tex></span></span></div><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><marimo-ui-element object-id='ZHCJ-0' random-id='36fcd45f-e2c8-48a4-8acb-678df3c9b094'><marimo-vega data-initial-value='{}' data-label='null' data-spec='{&quot;config&quot;:{&quot;view&quot;:{&quot;continuousWidth&quot;:300,&quot;continuousHeight&quot;:300,&quot;strokeWidth&quot;:0},&quot;axis&quot;:{&quot;grid&quot;:true,&quot;gridOpacity&quot;:0.3},&quot;axisY&quot;:{&quot;domain&quot;:true,&quot;domainWidth&quot;:1}},&quot;layer&quot;:[{&quot;mark&quot;:{&quot;type&quot;:&quot;area&quot;,&quot;color&quot;:&quot;#27ae60&quot;,&quot;opacity&quot;:0.2},&quot;encoding&quot;:{&quot;x&quot;:{&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Inventory&quot;,&quot;title&quot;:&quot;Inventory Level&quot;,&quot;type&quot;:&quot;quantitative&quot;},&quot;y2&quot;:{&quot;value&quot;:0}},&quot;transform&quot;:[{&quot;filter&quot;:&quot;(datum.Inventory &gt; 0)&quot;}]},{&quot;mark&quot;:{&quot;type&quot;:&quot;area&quot;,&quot;color&quot;:&quot;#e74c3c&quot;,&quot;opacity&quot;:0.2},&quot;encoding&quot;:{&quot;x&quot;:{&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Inventory&quot;,&quot;type&quot;:&quot;quantitative&quot;},&quot;y2&quot;:{&quot;value&quot;:0}},&quot;transform&quot;:[{&quot;filter&quot;:&quot;(datum.Inventory &lt; 0)&quot;}]},{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/1426-199074-ln4qpqhp.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;rule&quot;,&quot;color&quot;:&quot;black&quot;,&quot;opacity&quot;:0.8,&quot;size&quot;:2,&quot;strokeDash&quot;:[5,5]},&quot;encoding&quot;:{&quot;y&quot;:{&quot;field&quot;:&quot;y&quot;,&quot;scale&quot;:{&quot;zero&quot;:true},&quot;type&quot;:&quot;quantitative&quot;}}},{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/3418-199074-mpULyprJ.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;line&quot;,&quot;color&quot;:&quot;gray&quot;,&quot;opacity&quot;:0.8,&quot;size&quot;:2},&quot;encoding&quot;:{&quot;x&quot;:{&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Inventory&quot;,&quot;type&quot;:&quot;quantitative&quot;}}},{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/3418-199074-TxOF3EMF.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;circle&quot;,&quot;opacity&quot;:1,&quot;size&quot;:60},&quot;encoding&quot;:{&quot;color&quot;:{&quot;field&quot;:&quot;Status&quot;,&quot;legend&quot;:{&quot;title&quot;:&quot;Inventory Status&quot;},&quot;scale&quot;:{&quot;domain&quot;:[&quot;Safe&quot;,&quot;Danger&quot;],&quot;range&quot;:[&quot;#27ae60&quot;,&quot;#e74c3c&quot;]},&quot;type&quot;:&quot;nominal&quot;},&quot;tooltip&quot;:[{&quot;field&quot;:&quot;Date&quot;,&quot;format&quot;:&quot;%Y-%m-%d&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},{&quot;field&quot;:&quot;Inventory&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Inventory&quot;,&quot;type&quot;:&quot;quantitative&quot;},{&quot;field&quot;:&quot;Safety_Stock&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Safety Stock&quot;,&quot;type&quot;:&quot;quantitative&quot;},{&quot;field&quot;:&quot;Status&quot;,&quot;title&quot;:&quot;Status&quot;,&quot;type&quot;:&quot;nominal&quot;}],&quot;x&quot;:{&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Inventory&quot;,&quot;type&quot;:&quot;quantitative&quot;}}}],&quot;data&quot;:{&quot;url&quot;:&quot;./@file/3418-199074-iwoSsZoR.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;height&quot;:300,&quot;title&quot;:&quot;Inventory Depletion (Green = On Hand, Red = Shortage)&quot;,&quot;width&quot;:600,&quot;&#36;schema&quot;:&quot;https://vega.github.io/schema/vega-lite/v5.8.0.json&quot;}' data-chart-selection='true' data-field-selection='true'></marimo-vega></marimo-ui-element></div></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='flex: 0.8'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'>Page 5  |  </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Chair of Logistics and Quantitative Methods</em>  | </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Operations Management</em></span></span></span></div></div><div style='flex: 0.2'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div></div></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "83436a96fbea3b3761966c5a9ae3c51b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "Mismatched version of altair: expected >=5.3.0, got 5.0.1. Some features may not work correctly.",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "6f1ec4fd5167582947ac04ea8f496890",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size: 90%; color: gray;'><em> </em></span></span></span><div style='width:100%;text-align:left'><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"step-3-net-requirements\">Step 3: Net Requirements</h1></span></div></div><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: center;align-items: center;flex-wrap: nowrap;gap: 0rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: stretch;flex-wrap: nowrap;gap: 2rem'><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">After computing the projected on-hand inventory <marimo-tex class=\"arithmatex\">||(I_t^{central}||)</marimo-tex>, we check whether inventory will <strong>fall below the central warehouse's safety stock level</strong>.</span>\n<span class=\"paragraph\">Let <marimo-tex class=\"arithmatex\">||(SS^{central}||)</marimo-tex> be the safety stock of the central warehouse.</span>\n<span class=\"paragraph\">The safety stock calculation is the same as in inventory planning for the individual DCs.</span>\n<span class=\"paragraph\">If projected inventory stays <strong>above</strong> this level, no replenishment is required.</span>\n<span class=\"paragraph\">If projected inventory falls <strong>below</strong> the safety stock, a <strong>net requirement</strong> is created in that period.</span>\n<span class=\"paragraph\"><strong>Net Requirements Formula:</strong>\n<marimo-tex class=\"arithmatex\">||(<marimo-tex class=\"arithmatex\">||(NR_t = \\max(0, SS^{central} - I_t^{central}) \\quad \\text{for } t = 1, ..., 20||)</marimo-tex>||)</marimo-tex></span></span></div><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><marimo-ui-element object-id='qnkX-0' random-id='739eec01-488f-4534-62f4-2f91e8418090'><marimo-vega data-initial-value='{}' data-label='null' data-spec='{&quot;config&quot;:{&quot;view&quot;:{&quot;continuousWidth&quot;:300,&quot;continuousHeight&quot;:300,&quot;strokeWidth&quot;:0},&quot;axis&quot;:{&quot;grid&quot;:true,&quot;gridOpacity&quot;:0.3}},&quot;layer&quot;:[{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/4482-199074-u0jkPfI7.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;area&quot;,&quot;color&quot;:&quot;#e74c3c&quot;,&quot;opacity&quot;:0.2},&quot;encoding&quot;:{&quot;x&quot;:{&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Inventory&quot;,&quot;type&quot;:&quot;quantitative&quot;},&quot;y2&quot;:{&quot;value&quot;:0}},&quot;transform&quot;:[{&quot;filter&quot;:&quot;datum.Has_Shortage&quot;}]},{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/1426-199074-CCe8VEyn.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;rule&quot;,&quot;color&quot;:&quot;black&quot;,&quot;opacity&quot;:0.8,&quot;size&quot;:2,&quot;strokeDash&quot;:[5,5]},&quot;encoding&quot;:{&quot;y&quot;:{&quot;field&quot;:&quot;y&quot;,&quot;scale&quot;:{&quot;zero&quot;:true},&quot;type&quot;:&quot;quantitative&quot;}}},{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/1426-199074-pflUNCTB.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;rule&quot;,&quot;color&quot;:&quot;orange&quot;,&quot;size&quot;:2,&quot;strokeDash&quot;:[5,5]},&quot;encoding&quot;:{&quot;y&quot;:{&quot;field&quot;:&quot;y&quot;,&quot;type&quot;:&quot;quantitative&quot;}}},{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/4482-199074-j4ZcWPDt.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;line&quot;,&quot;color&quot;:&quot;#3498db&quot;,&quot;point&quot;:true,&quot;size&quot;:3},&quot;encoding&quot;:{&quot;tooltip&quot;:[{&quot;field&quot;:&quot;Date&quot;,&quot;format&quot;:&quot;%Y-%m-%d&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},{&quot;field&quot;:&quot;Inventory&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Inventory&quot;,&quot;type&quot;:&quot;quantitative&quot;},{&quot;field&quot;:&quot;Net_Requirements&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Net Requirements&quot;,&quot;type&quot;:&quot;quantitative&quot;}],&quot;x&quot;:{&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Inventory&quot;,&quot;title&quot;:&quot;Inventory Level&quot;,&quot;type&quot;:&quot;quantitative&quot;}}},{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/4482-199074-xJkLehcQ.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;bar&quot;,&quot;color&quot;:&quot;#e74c3c&quot;,&quot;opacity&quot;:0.7,&quot;size&quot;:20},&quot;encoding&quot;:{&quot;tooltip&quot;:[{&quot;field&quot;:&quot;Date&quot;,&quot;format&quot;:&quot;%Y-%m-%d&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},{&quot;field&quot;:&quot;Net_Requirements&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Shortage Amount&quot;,&quot;type&quot;:&quot;quantitative&quot;}],&quot;x&quot;:{&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Net_Requirements&quot;,&quot;type&quot;:&quot;quantitative&quot;}}}],&quot;height&quot;:300,&quot;title&quot;:&quot;Net Requirements: Shortage Periods Highlighted&quot;,&quot;width&quot;:600,&quot;&#36;schema&quot;:&quot;https://vega.github.io/schema/vega-lite/v5.8.0.json&quot;}' data-chart-selection='true' data-field-selection='true'></marimo-vega></marimo-ui-element></div></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='flex: 0.8'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'>Page 6  |  </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Chair of Logistics and Quantitative Methods</em>  | </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Operations Management</em></span></span></span></div></div><div style='flex: 0.2'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div></div></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "177f92739c2954a2cd11b2e06cf55374",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "141fbe95aac7431d57296bcbcb59764c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "9855c236fc40d7ef57d8d0eaeac566d9",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "Mismatched version of altair: expected >=5.3.0, got 5.0.1. Some features may not work correctly.",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "10f4921604d9aaf5954ce19403d7a3bd",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size: 90%; color: gray;'><em> </em></span></span></span><div style='width:100%;text-align:left'><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"step-4-planned-order-receipts-lot-sizing\">Step 4: Planned Order Receipts (Lot Sizing)</h1></span></div></div><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: center;align-items: center;flex-wrap: nowrap;gap: 0rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: stretch;flex-wrap: nowrap;gap: 2rem'><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">When a net requirement occurs in period <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex>, the central warehouse must create a Planned Order Receipt, denoted <marimo-tex class=\"arithmatex\">||(POR_t||)</marimo-tex>.</span>\n<span class=\"paragraph\">We use a fixed-lot rule based on: the central EOQ, <marimo-tex class=\"arithmatex\">||(EOQ^{central}||)</marimo-tex>, the Minimum Order Quantity, <marimo-tex class=\"arithmatex\">||(MOQ||)</marimo-tex>, and the order multiple, <marimo-tex class=\"arithmatex\">||(m||)</marimo-tex> (for example: orders must be in multiples of 100 packs)</span>\n<span class=\"paragraph\">The rule is:</span>\n<span class=\"paragraph\">If <marimo-tex class=\"arithmatex\">||(NR_t &gt; 0||)</marimo-tex>:\n<marimo-tex class=\"arithmatex\">||(<marimo-tex class=\"arithmatex\">||(POR_t = \\left\\lceil \\frac{\\max(NR_t, EOQ^{central}, MOQ)}{m} \\right\\rceil \\cdot m||)</marimo-tex>||)</marimo-tex></span>\n<span class=\"paragraph\">If <marimo-tex class=\"arithmatex\">||(NR_t = 0||)</marimo-tex>:\n<marimo-tex class=\"arithmatex\">||(<marimo-tex class=\"arithmatex\">||(POR_t = 0||)</marimo-tex>||)</marimo-tex></span></span><marimo-ui-element object-id='Vxnm-0' random-id='00b74c50-dc46-cb22-71b9-080f91f44717'><marimo-slider data-initial-value='1500' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;EOQ (central)&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='5000' data-step='50' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='Vxnm-1' random-id='f99730e4-43c1-70ea-25bb-1dd8d617f8e0'><marimo-slider data-initial-value='1000' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;MOQ&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='5000' data-step='50' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='Vxnm-2' random-id='3d860712-e276-9999-ba6c-f3928a54093f'><marimo-slider data-initial-value='100' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Order Multiple (m)&lt;/span&gt;&lt;/span&gt;&quot;' data-start='1' data-stop='1000' data-step='10' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element></div></div><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><marimo-ui-element object-id='ulZA-0' random-id='7fed9d83-518c-2d9e-7125-d96c670df4b1'><marimo-vega data-initial-value='{}' data-label='null' data-spec='{&quot;config&quot;:{&quot;view&quot;:{&quot;continuousWidth&quot;:300,&quot;continuousHeight&quot;:300,&quot;strokeWidth&quot;:0},&quot;axis&quot;:{&quot;grid&quot;:true,&quot;gridOpacity&quot;:0.3}},&quot;data&quot;:{&quot;url&quot;:&quot;./@file/3770-199074-XtgXCnQ3.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;bar&quot;,&quot;opacity&quot;:0.8},&quot;encoding&quot;:{&quot;color&quot;:{&quot;field&quot;:&quot;Type&quot;,&quot;legend&quot;:{&quot;title&quot;:&quot;Type&quot;},&quot;scale&quot;:{&quot;domain&quot;:[&quot;Net Requirements&quot;,&quot;Planned Order Receipts&quot;],&quot;range&quot;:[&quot;#e74c3c&quot;,&quot;#27ae60&quot;]},&quot;type&quot;:&quot;nominal&quot;},&quot;tooltip&quot;:[{&quot;field&quot;:&quot;Period&quot;,&quot;title&quot;:&quot;Period&quot;,&quot;type&quot;:&quot;ordinal&quot;},{&quot;field&quot;:&quot;Type&quot;,&quot;title&quot;:&quot;Type&quot;,&quot;type&quot;:&quot;nominal&quot;},{&quot;field&quot;:&quot;Quantity&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Quantity&quot;,&quot;type&quot;:&quot;quantitative&quot;}],&quot;x&quot;:{&quot;field&quot;:&quot;Period&quot;,&quot;title&quot;:&quot;Period&quot;,&quot;type&quot;:&quot;ordinal&quot;},&quot;xOffset&quot;:{&quot;field&quot;:&quot;Type&quot;,&quot;type&quot;:&quot;nominal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Quantity&quot;,&quot;title&quot;:&quot;Quantity&quot;,&quot;type&quot;:&quot;quantitative&quot;}},&quot;height&quot;:300,&quot;title&quot;:&quot;Net Requirements \u2192 Planned Order Receipts (Fixed-Lot Rule: EOQ=1500, MOQ=1000, m=201)&quot;,&quot;width&quot;:600,&quot;&#36;schema&quot;:&quot;https://vega.github.io/schema/vega-lite/v5.8.0.json&quot;}' data-chart-selection='true' data-field-selection='true'></marimo-vega></marimo-ui-element></div></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='flex: 0.8'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'>Page 29  |  </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Chair of Logistics and Quantitative Methods</em>  | </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Operations Management</em></span></span></span></div></div><div style='flex: 0.2'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div></div></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Pvdt",
+      "code_hash": "8579a9c2842ab51be36d02d94d1eda6a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZBYS",
+      "code_hash": "936a7d9369367f7a1b1ba40b6ba293ee",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "Mismatched version of altair: expected >=5.3.0, got 5.0.1. Some features may not work correctly.",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "aLJB",
+      "code_hash": "3d8485038f4628d785d03ccc05d5849f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size: 90%; color: gray;'><em> </em></span></span></span><div style='width:100%;text-align:left'><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"step-5-planned-order-releases\">Step 5: Planned Order Releases</h1></span></div></div><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: center;align-items: center;flex-wrap: nowrap;gap: 0rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: stretch;flex-wrap: nowrap;gap: 2rem'><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Planned Order Releases (Lead-Time Offset)</strong></span>\n<span class=\"paragraph\">The <strong>Planned Order Receipt (<marimo-tex class=\"arithmatex\">||(POR_t||)</marimo-tex>)</strong> tells us <em>when</em> inventory must arrive at the central warehouse.</span>\n<span class=\"paragraph\">To ensure this receipt arrives on time, we must <strong>release</strong> a purchase order <strong>earlier</strong>, shifted backward by the supplier <strong>lead time (<marimo-tex class=\"arithmatex\">||(L||)</marimo-tex>)</strong>.</span>\n<span class=\"paragraph\">The <strong>Planned Order Release (<marimo-tex class=\"arithmatex\">||(OR_t||)</marimo-tex>)</strong> in period <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex> is simply the <strong>Planned Order Receipt <marimo-tex class=\"arithmatex\">||(L||)</marimo-tex> periods later</strong>:</span>\n<marimo-tex class=\"arithmatex\">||[OR_t = POR_{t+L} \\quad\\text{or}\\quad POR_t = OR_{t-L}||]</marimo-tex><span class=\"paragraph\">This means:</span>\n<ul>\n<li>If we need material to <strong>arrive</strong> in week <marimo-tex class=\"arithmatex\">||(t + L||)</marimo-tex>, we must <strong>release</strong> in week <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex>.</li>\n<li>These releases become the <strong>purchase requisitions</strong> sent to suppliers.</li>\n</ul></span><marimo-ui-element object-id='Pvdt-0' random-id='3af38961-bf6e-b36a-4b59-9768dcf5d41e'><marimo-slider data-initial-value='2' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Lead Time (periods)&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='5' data-step='1' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element></div></div><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><marimo-ui-element object-id='ZBYS-0' random-id='45c477a6-8543-54a6-6061-f7b507a8fcf4'><marimo-vega data-initial-value='{}' data-label='null' data-spec='{&quot;config&quot;:{&quot;view&quot;:{&quot;continuousWidth&quot;:300,&quot;continuousHeight&quot;:300,&quot;strokeWidth&quot;:0},&quot;axis&quot;:{&quot;grid&quot;:true,&quot;gridOpacity&quot;:0.3}},&quot;layer&quot;:[{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/3650-199074-bpkTEYLc.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;bar&quot;,&quot;opacity&quot;:0.85},&quot;encoding&quot;:{&quot;color&quot;:{&quot;field&quot;:&quot;Type&quot;,&quot;legend&quot;:{&quot;title&quot;:&quot;Type&quot;},&quot;scale&quot;:{&quot;domain&quot;:[&quot;Planned Releases&quot;,&quot;Planned Receipts&quot;],&quot;range&quot;:[&quot;#e67e22&quot;,&quot;#27ae60&quot;]},&quot;type&quot;:&quot;nominal&quot;},&quot;tooltip&quot;:[{&quot;field&quot;:&quot;Period&quot;,&quot;title&quot;:&quot;Period&quot;,&quot;type&quot;:&quot;ordinal&quot;},{&quot;field&quot;:&quot;Type&quot;,&quot;title&quot;:&quot;Type&quot;,&quot;type&quot;:&quot;nominal&quot;},{&quot;field&quot;:&quot;Quantity&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Quantity&quot;,&quot;type&quot;:&quot;quantitative&quot;}],&quot;x&quot;:{&quot;field&quot;:&quot;Period&quot;,&quot;title&quot;:&quot;Period&quot;,&quot;type&quot;:&quot;ordinal&quot;},&quot;xOffset&quot;:{&quot;field&quot;:&quot;Type&quot;,&quot;type&quot;:&quot;nominal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Quantity&quot;,&quot;title&quot;:&quot;Quantity&quot;,&quot;type&quot;:&quot;quantitative&quot;}}},{&quot;layer&quot;:[{&quot;mark&quot;:{&quot;type&quot;:&quot;rule&quot;,&quot;color&quot;:&quot;#e74c3c&quot;,&quot;size&quot;:2,&quot;strokeDash&quot;:[4,2]},&quot;encoding&quot;:{&quot;x&quot;:{&quot;field&quot;:&quot;Release&quot;,&quot;scale&quot;:{&quot;domain&quot;:[1,20]},&quot;type&quot;:&quot;quantitative&quot;},&quot;x2&quot;:{&quot;field&quot;:&quot;Receipt&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;y&quot;,&quot;type&quot;:&quot;quantitative&quot;}}},{&quot;mark&quot;:{&quot;type&quot;:&quot;text&quot;,&quot;color&quot;:&quot;#e74c3c&quot;,&quot;dy&quot;:-6,&quot;fontWeight&quot;:&quot;bold&quot;},&quot;encoding&quot;:{&quot;text&quot;:{&quot;field&quot;:&quot;label&quot;,&quot;type&quot;:&quot;nominal&quot;},&quot;x&quot;:{&quot;field&quot;:&quot;Receipt&quot;,&quot;type&quot;:&quot;quantitative&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;y&quot;,&quot;type&quot;:&quot;quantitative&quot;}}}],&quot;data&quot;:{&quot;url&quot;:&quot;./@file/3066-199074-9W21FaEG.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}}}],&quot;height&quot;:320,&quot;title&quot;:&quot;Lead-Time Offset: Order Releases (Orange) \u2192 Receipts (Green) | L = 2&quot;,&quot;width&quot;:700,&quot;&#36;schema&quot;:&quot;https://vega.github.io/schema/vega-lite/v5.8.0.json&quot;}' data-chart-selection='true' data-field-selection='true'></marimo-vega></marimo-ui-element></div></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='flex: 0.8'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'>Page 30  |  </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Chair of Logistics and Quantitative Methods</em>  | </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Operations Management</em></span></span></span></div></div><div style='flex: 0.2'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div></div></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nHfw",
+      "code_hash": "ccbed75a57a3a21dc6bfff6596bad249",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "Mismatched version of altair: expected >=5.3.0, got 5.0.1. Some features may not work correctly.Mismatched version of altair: expected >=5.3.0, got 5.0.1. Some features may not work correctly.Mismatched version of altair: expected >=5.3.0, got 5.0.1. Some features may not work correctly.",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "xXTn",
+      "code_hash": "5e3420fbc3f7adbdb1f6c5f45cbec677",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0rem'><div style='width:auto'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size: 90%; color: gray;'><em> </em></span></span></span><div style='width:100%;text-align:left'><span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"steps-15-from-gross-requirements-to-releases-interactive\">Steps 1\u20135: From Gross Requirements to Releases (Interactive)</h1></span></div></div><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: center;align-items: center;flex-wrap: nowrap;gap: 0rem'><div style='height:600px'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">&nbsp;</span></span></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: stretch;flex-wrap: nowrap;gap: 2rem'><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.8remrem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">A single view of the full pipeline: gross requirements \u2192 projected on-hand \u2192 net requirements \u2192\nplanned receipts \u2192 planned releases. Adjust safety stock, receipts, lot sizing, and lead time to see the plan shift.</span></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 2remrem'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.35remrem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Step 2 Controls</strong></span></span><marimo-ui-element object-id='DnEU-0' random-id='0eb8e9a9-30a4-8b8b-9d2d-ca617b3d9f46'><marimo-slider data-initial-value='5000' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Step 2 Initial Inventory&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='10000' data-step='100' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='DnEU-1' random-id='1c211fb0-3d93-352b-e14f-d4ebd69a7840'><marimo-slider data-initial-value='200' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Step 2 Safety Stock&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='2000' data-step='20' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='DnEU-2' random-id='018ad31f-aa66-917e-7f89-ff36ec53f953'><marimo-slider data-initial-value='2000' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Step 2 Planned Receipt Qty&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='4000' data-step='100' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.35remrem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Lot Sizing (Step 4)</strong></span></span><marimo-ui-element object-id='Vxnm-0' random-id='00b74c50-dc46-cb22-71b9-080f91f44717'><marimo-slider data-initial-value='1500' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;EOQ (central)&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='5000' data-step='50' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='Vxnm-1' random-id='f99730e4-43c1-70ea-25bb-1dd8d617f8e0'><marimo-slider data-initial-value='1000' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;MOQ&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='5000' data-step='50' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='Vxnm-2' random-id='3d860712-e276-9999-ba6c-f3928a54093f'><marimo-slider data-initial-value='100' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Order Multiple (m)&lt;/span&gt;&lt;/span&gt;&quot;' data-start='1' data-stop='1000' data-step='10' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Lead Time (Step 5)</strong></span></span><marimo-ui-element object-id='Pvdt-0' random-id='3af38961-bf6e-b36a-4b59-9768dcf5d41e'><marimo-slider data-initial-value='2' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Lead Time (periods)&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='5' data-step='1' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element></div></div></div></div><div style='width:1600;height:50%;margin-left:auto;margin-right:auto'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 1.2remrem'><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 1remrem'><marimo-ui-element object-id='nHfw-0' random-id='ebdb80f1-f6cb-97cf-2e33-e55c5d6ff480'><marimo-vega data-initial-value='{}' data-label='null' data-spec='{&quot;config&quot;:{&quot;view&quot;:{&quot;continuousWidth&quot;:300,&quot;continuousHeight&quot;:300,&quot;strokeWidth&quot;:0}},&quot;data&quot;:{&quot;url&quot;:&quot;./@file/2266-199074-B1xfM0or.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;bar&quot;},&quot;encoding&quot;:{&quot;color&quot;:{&quot;value&quot;:&quot;#3498db&quot;},&quot;tooltip&quot;:[{&quot;field&quot;:&quot;Date&quot;,&quot;format&quot;:&quot;%Y-%m-%d&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},{&quot;field&quot;:&quot;Demand&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Demand&quot;,&quot;type&quot;:&quot;quantitative&quot;}],&quot;x&quot;:{&quot;axis&quot;:{&quot;labelAngle&quot;:-45},&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Demand&quot;,&quot;title&quot;:&quot;Gross Requirements&quot;,&quot;type&quot;:&quot;quantitative&quot;}},&quot;height&quot;:200,&quot;title&quot;:&quot;Step 1: Gross Requirements (Real DC Orders)&quot;,&quot;width&quot;:360,&quot;&#36;schema&quot;:&quot;https://vega.github.io/schema/vega-lite/v5.8.0.json&quot;}' data-chart-selection='true' data-field-selection='true'></marimo-vega></marimo-ui-element><marimo-ui-element object-id='nHfw-1' random-id='27b9a0df-9127-6a03-d5a2-95c4d5137767'><marimo-vega data-initial-value='{}' data-label='null' data-spec='{&quot;config&quot;:{&quot;view&quot;:{&quot;continuousWidth&quot;:300,&quot;continuousHeight&quot;:300,&quot;strokeWidth&quot;:0}},&quot;layer&quot;:[{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/2858-199074-UQ29W3yx.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;line&quot;,&quot;color&quot;:&quot;#8e44ad&quot;,&quot;point&quot;:true},&quot;encoding&quot;:{&quot;tooltip&quot;:[{&quot;field&quot;:&quot;Date&quot;,&quot;format&quot;:&quot;%Y-%m-%d&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},{&quot;field&quot;:&quot;Inventory&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Inventory&quot;,&quot;type&quot;:&quot;quantitative&quot;}],&quot;x&quot;:{&quot;field&quot;:&quot;Date&quot;,&quot;title&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;temporal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Inventory&quot;,&quot;title&quot;:&quot;Projected On Hand&quot;,&quot;type&quot;:&quot;quantitative&quot;}}},{&quot;data&quot;:{&quot;url&quot;:&quot;./@file/1426-199074-Ze0kjWIN.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;rule&quot;,&quot;color&quot;:&quot;orange&quot;,&quot;size&quot;:2,&quot;strokeDash&quot;:[5,5]},&quot;encoding&quot;:{&quot;y&quot;:{&quot;field&quot;:&quot;y&quot;,&quot;type&quot;:&quot;quantitative&quot;}}}],&quot;height&quot;:200,&quot;title&quot;:&quot;Step 2: Projected On-Hand vs. Demand&quot;,&quot;width&quot;:360,&quot;&#36;schema&quot;:&quot;https://vega.github.io/schema/vega-lite/v5.8.0.json&quot;}' data-chart-selection='true' data-field-selection='true'></marimo-vega></marimo-ui-element></div><marimo-ui-element object-id='nHfw-2' random-id='5114f51b-16db-ecf3-0637-8f68144f8b63'><marimo-vega data-initial-value='{}' data-label='null' data-spec='{&quot;config&quot;:{&quot;view&quot;:{&quot;continuousWidth&quot;:300,&quot;continuousHeight&quot;:300,&quot;strokeWidth&quot;:0},&quot;axis&quot;:{&quot;grid&quot;:true,&quot;gridOpacity&quot;:0.3}},&quot;data&quot;:{&quot;url&quot;:&quot;./@file/4370-199074-k55TVF1Z.arrow&quot;,&quot;format&quot;:{&quot;type&quot;:&quot;arrow&quot;}},&quot;mark&quot;:{&quot;type&quot;:&quot;bar&quot;,&quot;opacity&quot;:0.85},&quot;encoding&quot;:{&quot;color&quot;:{&quot;field&quot;:&quot;Type&quot;,&quot;legend&quot;:{&quot;title&quot;:&quot;Step Output&quot;},&quot;scale&quot;:{&quot;domain&quot;:[&quot;Net Requirements&quot;,&quot;Planned Receipts&quot;,&quot;Planned Releases&quot;],&quot;range&quot;:[&quot;#e74c3c&quot;,&quot;#27ae60&quot;,&quot;#e67e22&quot;]},&quot;type&quot;:&quot;nominal&quot;},&quot;tooltip&quot;:[{&quot;field&quot;:&quot;Period&quot;,&quot;title&quot;:&quot;Period&quot;,&quot;type&quot;:&quot;ordinal&quot;},{&quot;field&quot;:&quot;Type&quot;,&quot;title&quot;:&quot;Type&quot;,&quot;type&quot;:&quot;nominal&quot;},{&quot;field&quot;:&quot;Quantity&quot;,&quot;format&quot;:&quot;,&quot;,&quot;title&quot;:&quot;Quantity&quot;,&quot;type&quot;:&quot;quantitative&quot;}],&quot;x&quot;:{&quot;field&quot;:&quot;Period&quot;,&quot;title&quot;:&quot;Period (days)&quot;,&quot;type&quot;:&quot;ordinal&quot;},&quot;xOffset&quot;:{&quot;field&quot;:&quot;Type&quot;,&quot;type&quot;:&quot;nominal&quot;},&quot;y&quot;:{&quot;field&quot;:&quot;Quantity&quot;,&quot;title&quot;:&quot;Quantity&quot;,&quot;type&quot;:&quot;quantitative&quot;}},&quot;height&quot;:340,&quot;title&quot;:&quot;Lot Sizing and Lead-Time Shift | EOQ=1500, MOQ=1000, m=201, L=2&quot;,&quot;width&quot;:760,&quot;&#36;schema&quot;:&quot;https://vega.github.io/schema/vega-lite/v5.8.0.json&quot;}' data-chart-selection='true' data-field-selection='true'></marimo-vega></marimo-ui-element></div></div></div></div><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-start;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><div style='width: 1600px; height: 1px; background-color: darkgray;'></div></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><div style='flex: 0.8'><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'>Page 31  |  </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Chair of Logistics and Quantitative Methods</em>  | </span></span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><span style='font-size:0.7em;'><em>Operations Management</em></span></span></span></div></div><div style='flex: 0.2'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: flex-end;flex-wrap: nowrap;gap: 0rem'><img src='https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png' style='width: 200px' /></div></div></div></div></div><div class=\"page-break\"></div></div>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}
