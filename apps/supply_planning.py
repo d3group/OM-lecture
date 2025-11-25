@@ -337,17 +337,6 @@ def _(alt, df_supply, mo, pd, sc):
 
     gross_req_s2 = df_supply.groupby("Date")["Order_Placed_Qty"].sum().reindex(dates_s2, fill_value=0)
 
-    # Planned receipts from supplier (orders placed in earlier periods that arrive now)
-    # For this example, assume some receipts arrive on specific days
-    planned_receipts_s2 = pd.Series(0, index=dates_s2)
-    # Example: receipts arriving on days 5, 10, 15
-    if len(dates_s2) > 5:
-        planned_receipts_s2.iloc[5] = 2000
-    if len(dates_s2) > 10:
-        planned_receipts_s2.iloc[10] = 2000
-    if len(dates_s2) > 14:
-        planned_receipts_s2.iloc[14] = 2000
-
     initial_inv_s2 = 2500
     safety_stock_s2 = 500
 
@@ -355,8 +344,8 @@ def _(alt, df_supply, mo, pd, sc):
     current_inv_s2 = initial_inv_s2
     for date_s2 in dates_s2:
         demand_s2 = gross_req_s2.get(date_s2, 0)
-        receipt_s2 = planned_receipts_s2.get(date_s2, 0)
-        # Apply the MRP netting equation: I_t = I_{t-1} + PR_t - GR_t
+        receipt_s2 = 0  # no planned receipts in this step
+        # Apply the MRP netting equation without receipts: I_t = I_{t-1} - GR_t
         current_inv_s2 = current_inv_s2 + receipt_s2 - demand_s2
         inv_levels_s2.append({
             "Date": date_s2, 
@@ -429,7 +418,7 @@ def _(alt, df_supply, mo, pd, sc):
 
     # Combine all layers
     chart_s2 = (area_safe + area_danger + zero_line + line_s2 + points_s2).properties(
-        title="Inventory Depletion (Green = On Hand, Red = Shortage)",
+        title="MRP Step 2: Inventory Depletion (Green = On Hand, Red = Shortage)",
         width=600,
         height=300
     ).configure_view(
@@ -479,15 +468,6 @@ def _(alt, df_supply, mo, pd, sc):
     dates_s3 = dates_s3[:20]  # Show 20 days as per formula
     gross_req_s3 = df_supply.groupby("Date")["Order_Placed_Qty"].sum().reindex(dates_s3, fill_value=0)
 
-    # Planned receipts (same as Step 2)
-    planned_receipts_s3 = pd.Series(0, index=dates_s3)
-    if len(dates_s3) > 5:
-        planned_receipts_s3.iloc[5] = 2000
-    if len(dates_s3) > 10:
-        planned_receipts_s3.iloc[10] = 2000
-    if len(dates_s3) > 14:
-        planned_receipts_s3.iloc[14] = 2000
-
     initial_inv_s3 = 2500
     safety_stock_s3 = 500
 
@@ -495,17 +475,15 @@ def _(alt, df_supply, mo, pd, sc):
     current_inv_s3 = initial_inv_s3
     for date_s3 in dates_s3:
         demand_s3 = gross_req_s3.get(date_s3, 0)
-        receipt_s3 = planned_receipts_s3.get(date_s3, 0)
-        available_s3 = current_inv_s3 + receipt_s3
+        available_s3 = current_inv_s3  # no receipts in Step 3
         projected_after_demand = available_s3 - demand_s3
-        # If projected inventory falls below safety stock, plan a receipt (L4L) to lift it back
+        # Pure netting: show the gap to safety stock, no automatic top-up
         net_req_s3 = max(0, safety_stock_s3 - projected_after_demand)
-        planned_receipt_s3 = net_req_s3
-        projected_on_hand = projected_after_demand + planned_receipt_s3
+        projected_on_hand = projected_after_demand
         inv_levels_s3.append({
             "Date": date_s3, 
             "Gross_Requirements": demand_s3,
-            "Scheduled_Receipts": receipt_s3,
+            "Scheduled_Receipts": 0,
             "Inventory": projected_on_hand,
             "Net_Requirements": net_req_s3,
             "Has_Shortage": net_req_s3 > 0
@@ -516,23 +494,54 @@ def _(alt, df_supply, mo, pd, sc):
 
     base_s3 = alt.Chart(inv_df_s3).encode(x=alt.X("Date:T", title="Date"))
 
+    # Long-form data for legend-able layers
+    legend_domain_s3 = ["Inventory", "Safety Stock", "Net Requirements"]
+    legend_range_s3 = ["#0a558c", "#f6ae2d", "#b23a48"]
+
+    overlay_s3 = pd.concat([
+        inv_df_s3[["Date", "Inventory"]].rename(columns={"Inventory": "Value"}).assign(Type="Inventory"),
+        inv_df_s3[["Date", "Net_Requirements"]].rename(columns={"Net_Requirements": "Value"}).assign(Type="Net Requirements"),
+        pd.DataFrame({"Date": dates_s3, "Value": safety_stock_s3, "Type": "Safety Stock"})
+    ])
+
     # Inventory line
-    line_s3 = base_s3.mark_line(point=True, size=3, color="#3498db").encode(
-        y=alt.Y("Inventory:Q", title="Inventory Level"),
-        tooltip=[
-            alt.Tooltip("Date:T", title="Date", format="%Y-%m-%d"),
-            alt.Tooltip("Inventory:Q", title="Inventory", format=","),
-            alt.Tooltip("Net_Requirements:Q", title="Net Requirements", format=",")
-        ]
+    line_s3 = (
+        alt.Chart(overlay_s3)
+        .transform_filter(alt.datum.Type == "Inventory")
+        .mark_line(point=True, size=3)
+        .encode(
+            x=alt.X("Date:T", title="Date"),
+            y=alt.Y("Value:Q", title="Inventory Level"),
+            color=alt.Color(
+                "Type:N",
+                scale=alt.Scale(domain=legend_domain_s3, range=legend_range_s3),
+                legend=alt.Legend(title="Series")
+            ),
+            tooltip=[
+                alt.Tooltip("Date:T", title="Date", format="%Y-%m-%d"),
+                alt.Tooltip("Value:Q", title="Inventory", format=","),
+            ],
+        )
     )
 
-    # Shortage bars (prominent)
-    shortage_bars_s3 = base_s3.mark_bar(opacity=0.7, color="#e74c3c", size=20).encode(
-        y=alt.Y("Net_Requirements:Q"),
-        tooltip=[
-            alt.Tooltip("Date:T", title="Date", format="%Y-%m-%d"),
-            alt.Tooltip("Net_Requirements:Q", title="Shortage Amount", format=",")
-        ]
+    # Net requirements bars
+    net_bars_s3 = (
+        alt.Chart(overlay_s3)
+        .transform_filter(alt.datum.Type == "Net Requirements")
+        .mark_bar(opacity=0.7, size=20)
+        .encode(
+            x=alt.X("Date:T"),
+            y=alt.Y("Value:Q", title="Quantity"),
+            color=alt.Color(
+                "Type:N",
+                scale=alt.Scale(domain=legend_domain_s3, range=legend_range_s3),
+                legend=None
+            ),
+            tooltip=[
+                alt.Tooltip("Date:T", title="Date", format="%Y-%m-%d"),
+                alt.Tooltip("Value:Q", title="Net Requirements", format=","),
+            ],
+        )
     )
 
     # Zero baseline (dashed black line)
@@ -543,11 +552,11 @@ def _(alt, df_supply, mo, pd, sc):
         opacity=0.8
     ).encode(y=alt.Y("y:Q", scale=alt.Scale(zero=True)))
 
-    # Safety stock reference
+    # Safety stock reference (flat line across dates)
     safety_line_s3 = alt.Chart(pd.DataFrame({"y": [safety_stock_s3]})).mark_rule(
-        strokeDash=[5, 5],
-        color="orange",
-        size=2
+        strokeDash=[6, 3],
+        size=2,
+        color="#f6ae2d"
     ).encode(y="y:Q")
 
     # Shortage area highlighting
@@ -558,8 +567,14 @@ def _(alt, df_supply, mo, pd, sc):
         y2=alt.value(0)
     )
 
-    chart_s3 = (shortage_area_s3 + zero_line_s3 + safety_line_s3 + line_s3 + shortage_bars_s3).properties(
-        title="Net Requirements: Shortage Periods Highlighted",
+    chart_s3 = (
+        shortage_area_s3
+        + zero_line_s3
+        + safety_line_s3
+        + line_s3
+        + net_bars_s3
+    ).properties(
+        title="MRP Step 3: Net Requirements",
         width=600,
         height=300
     ).configure_view(
@@ -567,7 +582,7 @@ def _(alt, df_supply, mo, pd, sc):
     ).configure_axis(
         grid=True,
         gridOpacity=0.3
-    )
+    ).resolve_scale(color="independent")
 
     step3_slide.content2 = mo.ui.altair_chart(chart_s3)
     return inv_df_s3, step3_slide
@@ -592,8 +607,7 @@ def _(mo):
     # Step 2 controls for the overview
     step2_initial_inv = mo.ui.slider(start=0, stop=10000, value=2500, step=100, label="Step 2 Initial Inventory")
     step2_safety_stock = mo.ui.slider(start=0, stop=2000, value=500, step=20, label="Step 2 Safety Stock")
-    step2_receipt_qty = mo.ui.slider(start=0, stop=4000, value=2000, step=100, label="Step 2 Planned Receipt Qty")
-    return step2_initial_inv, step2_receipt_qty, step2_safety_stock
+    return step2_initial_inv, step2_safety_stock
 
 
 @app.cell
@@ -633,45 +647,43 @@ def _(alt, eoq_slider, inv_df_s3, math, mo, moq_slider, mult_slider, pd, sc):
     moq = moq_slider.value
     m = max(1, mult_slider.value)
 
-    # Use the net requirements calculated in Step 3
-    net_requirements_list = [int(x) for x in inv_df_s3["Net_Requirements"].tolist()]
+    # Recompute net requirements using projected on hand (no accumulation runaway)
+    gross_s4 = inv_df_s3["Gross_Requirements"].reset_index(drop=True)
+    safety_stock_s4 = 500
+    initial_inv_s4 = 2500
 
-    # Apply fixed-lot rule to each Net Requirement
+    net_requirements_list = []
     planned_receipts_list = []
-    for net_req_value in net_requirements_list:
-        if net_req_value > 0:
+    inventory_levels = []
+    current_inv = initial_inv_s4
+
+    for i, gross in enumerate(gross_s4, start=1):
+        projected = current_inv - gross
+        if projected < safety_stock_s4:
+            net_req_value = safety_stock_s4 - projected
             base_qty_s4 = max(eoq_central, moq, net_req_value)
             por_s4 = int(math.ceil(base_qty_s4 / m)) * m
         else:
+            net_req_value = 0
             por_s4 = 0
+
+        net_requirements_list.append(int(net_req_value))
         planned_receipts_list.append(por_s4)
+
+        projected_after = projected + por_s4
+        current_inv = projected_after
+
+        inventory_levels.append({
+            "Period": i,
+            "Inventory": current_inv,
+            "Safety_Stock": safety_stock_s4
+        })
 
     df_s4 = pd.DataFrame({
         "Period": list(range(1, len(net_requirements_list) + 1)),
         "Net Requirements": net_requirements_list,
         "Planned Order Receipts": planned_receipts_list
     })
-
-    # Calculate inventory levels with the planned receipts
-    safety_stock_s4 = 500
-    initial_inv_s4 = 2500
-
-    # Simulate inventory over time with planned receipts
-    inventory_levels = []
-    current_inv = initial_inv_s4
-    for i, row in df_s4.iterrows():
-        period_s4 = row["Period"]
-        por = row["Planned Order Receipts"]
-        # Get gross requirements from Step 3 data (actual demand, not net requirements)
-        gr = inv_df_s3.iloc[i]["Gross_Requirements"] if i < len(inv_df_s3) else 0
-
-        # Update inventory: add receipts, subtract gross requirements
-        current_inv = current_inv + por - gr
-        inventory_levels.append({
-            "Period": period_s4,
-            "Inventory": current_inv,
-            "Safety_Stock": safety_stock_s4
-        })
 
     inv_df_s4 = pd.DataFrame(inventory_levels)
 
@@ -773,7 +785,7 @@ def _(alt, eoq_slider, inv_df_s3, math, mo, moq_slider, mult_slider, pd, sc):
     ).resolve_scale(color="independent")
 
     step4_slide.content2 = mo.ui.altair_chart(chart_s4)
-    return df_s4, initial_inv_s4, step4_slide
+    return df_s4, inv_df_s4, safety_stock_s4, step4_slide
 
 
 @app.cell(hide_code=True)
@@ -789,8 +801,8 @@ def _(mo):
 
 
 @app.cell
-def _(alt, df_s4, inv_df_s3, lt_slider, mo, pd, sc):
-    step5_slide = sc.create_slide("Planned Order Releases (Lead-Time Offset)", layout_type="2-row")
+def _(alt, df_s4, inv_df_s3, inv_df_s4, lt_slider, mo, pd, safety_stock_s4, sc):
+    step5_slide = sc.create_slide("Step 5: Planned Order Releases (Lead-Time Offset)", layout_type="2-row")
 
     step5_slide.content1 = mo.vstack([
         mo.md(
@@ -853,25 +865,17 @@ def _(alt, df_s4, inv_df_s3, lt_slider, mo, pd, sc):
         ]
     )
 
-    # Projected inventory with safety stock aligned to Step 4 assumptions
-    gross_req_s5 = inv_df_s3["Gross_Requirements"].reset_index(drop=True)
-    gross_req_s5 = gross_req_s5.head(len(periods_s5)).reindex(range(len(periods_s5)), fill_value=0)
-    safety_stock_s5 = 500
-    initial_inv_s5 = 2500
-    inv_levels_s5 = []
-    current_inv_s5 = initial_inv_s5
-    for s5_idx in range(len(periods_s5)):
-        current_inv_s5 = current_inv_s5 + receipt_plan.iloc[s5_idx] - gross_req_s5.iloc[s5_idx]
-        inv_levels_s5.append({"Period": periods_s5[s5_idx], "Inventory": current_inv_s5})
-    inv_df_s5 = pd.DataFrame(inv_levels_s5)
+    # Projected inventory mirrors Step 4 inventory trajectory
+    inv_df_s5 = inv_df_s4.copy()[["Period", "Inventory"]]
+    safety_stock_s5 = safety_stock_s4
 
     # Lines with legend (Inventory + Safety Stock)
     line_domain_s5 = ["Inventory", "Safety Stock"]
-    line_range_s5 = ["#0a558c", "#DC143C"]
+    line_range_s5 = ["#0a558c", "#f6ae2d"]
     line_dash_s5 = [[1, 0], [6, 3]]
 
     line_df_s5 = pd.concat([
-        inv_df_s5[["Period", "Inventory"]].assign(LineType="Inventory").rename(columns={"Inventory": "Quantity"}),
+        inv_df_s5.assign(LineType="Inventory").rename(columns={"Inventory": "Quantity"}),
         pd.DataFrame({"Period": periods_s5, "Quantity": safety_stock_s5, "LineType": "Safety Stock"})
     ])
 
@@ -923,7 +927,7 @@ def _(alt, df_s4, inv_df_s3, lt_slider, mo, pd, sc):
 
 
     step5_slide.content2 = mo.ui.altair_chart(chart_s5)
-    return periods_s5, step5_slide
+    return (step5_slide,)
 
 
 @app.cell(hide_code=True)
@@ -939,17 +943,15 @@ def _(
     df_supply,
     eoq_slider,
     initial_inv_s4,
+    inv_df_s4,
     inv_df_s3,
     lt_slider,
-    math,
     mo,
     moq_slider,
     mult_slider,
     pd,
-    periods_s5,
     sc,
     step2_initial_inv,
-    step2_receipt_qty,
     step2_safety_stock,
 ):
     overview_slide = sc.create_slide(
@@ -968,8 +970,7 @@ def _(
             mo.vstack([
                 mo.md("**Step 2 Controls**"),
                 step2_initial_inv,
-                step2_safety_stock,
-                step2_receipt_qty
+                step2_safety_stock
             ], gap="0.35rem"),
             mo.vstack([
                 mo.md("**Lot Sizing (Step 4)**"),
@@ -1046,23 +1047,17 @@ def _(
         height=200
     ).configure_view(strokeWidth=0)
 
-    # Step 2: Projected on-hand inventory (20 days) — recompute with unique names
+    # Step 2: Projected on-hand inventory (20 days) — recompute with unique names (no planned receipts)
     step2_dates = dates_s1
     step2_gross_req = df_supply.groupby("Date")["Order_Placed_Qty"].sum().reindex(step2_dates, fill_value=0)
     step2_planned_receipts = pd.Series(0, index=step2_dates)
-    if len(step2_dates) > 5:
-        step2_planned_receipts.iloc[5] = step2_receipt_qty.value
-    if len(step2_dates) > 10:
-        step2_planned_receipts.iloc[10] = step2_receipt_qty.value
-    if len(step2_dates) > 14:
-        step2_planned_receipts.iloc[14] = step2_receipt_qty.value
     step2_initial_inv_val = step2_initial_inv.value
     step2_safety_stock_val = step2_safety_stock.value
     step2_levels = []
     step2_current_inv = step2_initial_inv_val
     for step2_date in step2_dates:
         step2_demand = step2_gross_req.get(step2_date, 0)
-        step2_receipt = step2_planned_receipts.get(step2_date, 0)
+        step2_receipt = 0
         step2_current_inv = step2_current_inv + step2_receipt - step2_demand
         step2_levels.append({
             "Date": step2_date,
@@ -1088,31 +1083,17 @@ def _(
         height=200
     ).configure_view(strokeWidth=0)
 
-    # Dynamic net requirements based on projected inventory vs. safety stock
-    dyn_net_req = pd.Series(
-        [max(0, step2_safety_stock_val - inv) for inv in step2_df["Inventory"]],
-        index=range(1, len(step2_df) + 1)
-    )
-    # Lot sizing for overview using sliders
-    eoq_val = eoq_slider.value
-    moq_val = moq_slider.value
-    mult_val = max(1, mult_slider.value)
-    dyn_receipts = []
-    for nr in dyn_net_req:
-        if nr > 0:
-            base_qty_s5 = max(eoq_val, moq_val, nr)
-            por_s5 = int(math.ceil(base_qty_s5 / mult_val)) * mult_val
-        else:
-            por_s5 = 0
-        dyn_receipts.append(por_s5)
-    dyn_receipts = pd.Series(dyn_receipts, index=dyn_net_req.index)
-    dyn_releases = dyn_receipts.shift(-int(lt_slider.value), fill_value=0).astype(int)
+    # Use Step 4/5 outputs for combined view (stable, consistent)
+    periods_combined = df_s4["Period"]
+    net_req_combined = pd.Series(df_s4["Net Requirements"].values, index=periods_combined)
+    receipts_combined = pd.Series(df_s4["Planned Order Receipts"].values, index=periods_combined)
+    releases_combined = receipts_combined.shift(-int(lt_slider.value), fill_value=0).astype(int)
 
     combined_df = pd.DataFrame({
-        "Period": dyn_net_req.index,
-        "Net Requirements": dyn_net_req.values,
-        "Planned Receipts": dyn_receipts.values,
-        "Planned Releases": dyn_releases.values
+        "Period": periods_combined,
+        "Net Requirements": net_req_combined.values,
+        "Planned Receipts": receipts_combined.values,
+        "Planned Releases": releases_combined.values
     })
 
     melted = combined_df.melt(
@@ -1144,16 +1125,16 @@ def _(
     # Projected inventory using Step 4 receipts and gross demand (stable, matches Steps 4/5)
     inv_levels_overview = []
     current_inv_overview = initial_inv_s4
-    gross_req_overview = inv_df_s3["Gross_Requirements"].reset_index(drop=True).head(len(periods_s5)).reindex(range(len(periods_s5)), fill_value=0)
-    for ov_idx in range(len(periods_s5)):
-        rec_val = df_s4["Planned Order Receipts"].iloc[ov_idx] if ov_idx < len(df_s4) else 0
+    gross_req_overview = inv_df_s3["Gross_Requirements"].reset_index(drop=True).head(len(periods_combined)).reindex(range(len(periods_combined)), fill_value=0)
+    for ov_idx in range(len(periods_combined)):
+        rec_val = receipts_combined.iloc[ov_idx] if ov_idx < len(receipts_combined) else 0
         gr_val = gross_req_overview.iloc[ov_idx]
         current_inv_overview = current_inv_overview + rec_val - gr_val
         inv_levels_overview.append({"Period": ov_idx + 1, "Inventory": current_inv_overview})
     inv_df_overview = pd.DataFrame(inv_levels_overview)
 
     line_domain_overview = ["Inventory", "Safety Stock"]
-    line_range_overview = ["#0a558c", "#DC143C"]
+    line_range_overview = ["#0a558c", "#f6ae2d"]
     line_dash_overview = [[1, 0], [6, 3]]
 
     line_df_overview = pd.concat([
@@ -1195,8 +1176,61 @@ def _(
         )
     )
 
-    overview_chart_all = (bars_overview + lines_overview + inv_points_overview).properties(
-        title=f"Steps 1–5 Combined | EOQ={int(eoq_val)}, MOQ={int(moq_val)}, m={int(mult_val)}, L={int(lt_slider.value)}",
+    eoq_moq_df = pd.concat([
+        pd.DataFrame({
+            "Period": combined_df["Period"],
+            "Quantity": [eoq_slider.value] * len(combined_df),
+            "LineType": "EOQ"
+        }),
+        pd.DataFrame({
+            "Period": combined_df["Period"],
+            "Quantity": [moq_slider.value] * len(combined_df),
+            "LineType": "MOQ"
+        })
+    ], ignore_index=True)
+
+    line_df_overview_full = pd.concat([line_df_overview, eoq_moq_df])
+
+    lines_overview_full = alt.Chart(line_df_overview_full).mark_line(size=2.2).encode(
+        x=alt.X("Period:O"),
+        y=alt.Y("Quantity:Q"),
+        color=alt.Color(
+            "LineType:N",
+            scale=alt.Scale(domain=["Inventory", "Safety Stock", "EOQ", "MOQ"], range=["#0a558c", "#f6ae2d", "#9c6ade", "#7f8c8d"]),
+            legend=alt.Legend(title="Lines")
+        ),
+        strokeDash=alt.StrokeDash(
+            "LineType:N",
+            scale=alt.Scale(
+                domain=["Inventory", "Safety Stock", "EOQ", "MOQ"],
+                range=[[1, 0], [6, 3], [4, 4], [2, 6]]
+            ),
+            legend=None
+        ),
+        tooltip=[
+            alt.Tooltip("Period:O", title="Period"),
+            alt.Tooltip("LineType:N", title="Line"),
+            alt.Tooltip("Quantity:Q", title="Quantity", format=",")
+        ]
+    )
+
+    # Filter inventory points from the full line DF to avoid double plotting EOQ/MOQ
+    inv_points_overview = (
+        alt.Chart(line_df_overview_full)
+        .transform_filter(alt.datum.LineType == "Inventory")
+        .mark_point(size=55, color="#0a558c")
+        .encode(
+            x=alt.X("Period:O"),
+            y=alt.Y("Quantity:Q"),
+            tooltip=[
+                alt.Tooltip("Period:O", title="Period"),
+                alt.Tooltip("Quantity:Q", title="Inventory", format=",")
+            ]
+        )
+    )
+
+    overview_chart_all = (bars_overview + lines_overview_full + inv_points_overview).properties(
+        title=f"Steps 1–5 Combined | EOQ={int(eoq_slider.value)}, MOQ={int(moq_slider.value)}, m={int(mult_slider.value)}, L={int(lt_slider.value)}",
         width=900,
         height=420
     ).configure_view(
