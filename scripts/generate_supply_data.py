@@ -74,10 +74,22 @@ def generate_supply_data():
                 "Inventory_Position": inventory_pos + demand, # Correction for display
                 "Reorder_Point": R,
                 "Order_Placed_Qty": order_placed_qty,
-                "Order_Received_Qty": received_qty
+                "Order_Received_Qty": received_qty,
+                "Order_Policy_Q": Q
             })
             
     df = pd.DataFrame(data)
+
+    # Ensure the central always sees inbound orders each day (no zero-order days)
+    orders_by_date = df.groupby("Date")["Order_Placed_Qty"].sum()
+    zero_order_dates = orders_by_date[orders_by_date == 0].index
+    for z_date in zero_order_dates:
+        mask = df["Date"] == z_date
+        if not mask.any():
+            continue
+        first_idx = df[mask].index[0]
+        fallback_qty = max(50, int(df.loc[first_idx, "Order_Policy_Q"]))
+        df.loc[first_idx, "Order_Placed_Qty"] = fallback_qty
     
     # Ensure output directory exists
     output_dir = "apps/public/data/supply_planning"
