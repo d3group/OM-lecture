@@ -28,20 +28,20 @@ class Slide:
             "https://raw.githubusercontent.com/d3group/.github/refs/heads/main/assets/D3_2c.png",
             width=200,
         )
-        self.vertical_spacer_height = 800
-        self.horizontal_spacer_width = 1600
+        self.vertical_spacer_height = "auto"
+        self.horizontal_spacer_width = "100%"
 
     def get_spacer_horizontal(self, size=None):
         width = "auto" if size is None else f"{size}px"
-        return mo.md(r"""&nbsp;""").style({"width": width})
+        return mo.md(r"""&nbsp;""").style({"width": width, "flex-shrink": 0})
 
-    def get_spacer_vertical(self, size=600):
-        height = "auto" if size is None else f"{size}px"
-        return mo.md(r"""&nbsp;""").style({"height": height})
+    def get_spacer_vertical(self, size=None):
+        height = "1rem" if size is None else f"{size}px"
+        return mo.md(r"""&nbsp;""").style({"height": height, "flex-shrink": 0})
 
     def get_horizontal_rule(self):
         return mo.md(
-            f"<div style='width: {self.horizontal_spacer_width}px; height: 1px; background-color: darkgray;'></div>"
+            f"<div style='width: 100%; height: 1px; background-color: darkgray;'></div>"
         )
 
     def get_footer(self, slide_number=0):
@@ -106,12 +106,12 @@ class Slide:
             )
 
     def render_slide(
-        self, left_width=750, right_width=450, content1=None, content2=None
+        self, left_width=None, right_width=None, content1=None, content2=None
     ):
         title_style = {
             "width": "100%",
             "text-align": "left",
-        }  # Ensure full width and left alignment
+        }
 
         if self.title != "Agenda":
             title_content = mo.vstack(
@@ -134,80 +134,93 @@ class Slide:
 
         # Generic slide structure
         def create_slide_content(content, include_footer=True):
-            elements = [
-                self.get_spacer_horizontal(),
+            # Use HTML structure with CSS classes for layout
+            header = mo.vstack([
                 title_content,
                 self.get_horizontal_rule(),
-                content,
-            ]
-            if include_footer:
-                elements.append(self.get_footer(self.slide_number))
-            return mo.vstack(elements, gap=0, justify="start", align="start")
+            ], gap=0, align="start", justify="start").style({"width": "100%"})
+            
+            footer = self.get_footer(self.slide_number) if include_footer else mo.md("")
+            
+            return mo.Html(f"""
+                <div class="slide-container">
+                    <div class="slide-content-wrapper">
+                        {header}
+                        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; width: 100%;">
+                            {content}
+                        </div>
+                        <div class="slide-footer">
+                            {footer}
+                        </div>
+                    </div>
+                </div>
+            """)
 
         if self.layout_type == "title-slide":
             self.section = None
-            content = mo.hstack(
+            
+            # Title slide content
+            main_content = mo.hstack(
                 [
-                    self.get_spacer_vertical(),
+                    mo.md(
+                        """<div style='width: 4px; height: 300px; background-color: darkgray;'></div>"""
+                    ),
                     mo.vstack(
                         [
-                            self.get_spacer_horizontal(),
-                            self.get_spacer_vertical(100),
+                            mo.md(
+                                f"<span style='font-size:2em;'>{self.lecture_name}</span>"
+                            ),
+                            mo.md(f"#{self.title_raw}"),
+                            mo.md(""),
+                            mo.md(""),
                             mo.hstack(
                                 [
-                                    mo.md(
-                                        """<div style='width: 4px; height: 300px; background-color: darkgray;'></div>"""
-                                    ),
                                     mo.vstack(
                                         [
                                             mo.md(
-                                                f"<span style='font-size:2em;'>{self.lecture_name}</span>"
-                                            ),
-                                            mo.md(f"#{self.title_raw}"),
-                                            mo.md(""),
-                                            mo.md(""),
-                                            mo.hstack(
-                                                [
-                                                    mo.vstack(
-                                                        [
-                                                            mo.md(
-                                                                f"{self.presenter} ({self.chair_title})"
-                                                            )
-                                                        ],
-                                                        align="start",
-                                                    ),
-                                                    self.content2,
-                                                ],
-                                                align="center",
-                                                gap=1,
-                                                justify="space-around",
-                                            ),
+                                                f"{self.presenter} ({self.chair_title})"
+                                            )
                                         ],
                                         align="start",
                                     ),
+                                    self.content2,
                                 ],
-                                justify="start",
-                                align="start",
-                                gap=5,
-                            ).style({"text-align": "left"}),
-                            self.get_spacer_vertical(100),
+                                align="center",
+                                gap=1,
+                                justify="space-around",
+                            ),
                         ],
-                        gap=0,
-                        justify="start",
+                        align="start",
                     ),
-                ]
-            )
-            slide = mo.vstack(
-                [content, mo.vstack([self.logo], gap=0, align="end")], gap=0
-            )
+                ],
+                justify="start",
+                align="center",
+                gap=2,
+            ).style({"text-align": "left"})
+            
+            slide = create_slide_content(main_content, include_footer=False)
+            # Add logo manually for title slide if needed, or rely on footer logic if we want it there.
+            # The original code added logo at the bottom right.
+            # Let's add it to the footer area but without the rule/text if that was the intent,
+            # or just use the standard footer logic but maybe different content.
+            # Re-reading original: title slide had logo at bottom right but no footer text.
+            
+            slide = mo.Html(f"""
+                <div class="slide-container">
+                    <div class="slide-content-wrapper" style="justify-content: center;">
+                        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; width: 100%;">
+                            {main_content}
+                        </div>
+                        <div class="slide-footer" style="display: flex; justify-content: flex-end;">
+                            {self.logo}
+                        </div>
+                    </div>
+                </div>
+            """)
+
 
         elif self.layout_type == "1-column":
-            content = mo.hstack(
-                [self.get_spacer_vertical(), self.content1.style({"width": "100%"})],
-                gap=0,
-                justify="center",
-                align="center",
-            )
+            content = self.content1.style({"width": "100%"})
             slide = create_slide_content(content)
 
         elif self.layout_type == "side-by-side":
@@ -241,98 +254,78 @@ class Slide:
             
             content = mo.vstack([
                 compact_text_style,
-                mo.hstack(
-                    [
-                        self.get_spacer_vertical(),
-                        mo.Html(f"""
-                            <div class="slide-content-compact" style="width: 750px;">
-                                {self.content1}
-                            </div>
-                        """),
-                        mo.Html(f"""
-                            <div class="slide-content-compact" style="width: 700px;">
-                                {self.content2}
-                            </div>
-                        """),
-                    ],
-                    gap=2,
-                    justify="start",
-                    align="start",
-                )
+                mo.Html(f"""
+                    <div class="layout-2-column">
+                        <div class="layout-column slide-content-compact">
+                            {self.content1}
+                        </div>
+                        <div class="layout-column slide-content-compact">
+                            {self.content2}
+                        </div>
+                    </div>
+                """)
             ], gap=0)
             slide = create_slide_content(content)
 
         elif self.layout_type == "flexible-2-column":
-            content = mo.hstack(
-                [
-                    self.get_spacer_vertical(),
-                    self.content1.style(
-                        {
-                            "width": f"{left_width}px",
-                            "margin-left": "auto",
-                            "margin-right": "auto",
-                        }
-                    ),
-                    self.content2.style(
-                        {
-                            "width": f"{right_width}px",
-                            "margin-left": "auto",
-                            "margin-right": "auto",
-                        }
-                    ),
-                ],
-                gap=0,
-                justify="center",
-                align="center",
-            )
+            # Use flex-basis or width percentages if provided, otherwise equal width
+            # Converting pixel widths to approximate flex ratios or just using flex
+            
+            style1 = {"flex": "1"}
+            style2 = {"flex": "1"}
+            
+            if left_width and right_width:
+                 total = left_width + right_width
+                 p1 = (left_width / total) * 100
+                 p2 = (right_width / total) * 100
+                 style1 = {"width": f"{p1}%"}
+                 style2 = {"width": f"{p2}%"}
+            
+            content = mo.Html(f"""
+                <div class="layout-2-column">
+                    <div class="layout-column" style="flex: {style1.get('flex', 'none')}; width: {style1.get('width', 'auto')}">
+                        {self.content1}
+                    </div>
+                    <div class="layout-column" style="flex: {style2.get('flex', 'none')}; width: {style2.get('width', 'auto')}">
+                        {self.content2}
+                    </div>
+                </div>
+            """)
             slide = create_slide_content(content)
 
         elif self.layout_type == "2-row":
-            top = self.content1.style({"width": 1600, "height": "50%", "margin-left": "auto", "margin-right": "auto"})
-            bot = self.content2.style({"width": 1600, "height": "50%", "margin-left": "auto", "margin-right": "auto"})
+            top = self.content1.style({"width": "100%", "height": "auto"})
+            bot = self.content2.style({"width": "100%", "height": "auto"})
 
-            content = mo.hstack([
-                self.get_spacer_vertical(),
-                mo.vstack([top, bot], gap=2, justify="start", align="stretch")
-            ], gap=0, justify="center", align="center")
-
+            content = mo.vstack([top, bot], gap=2, justify="start", align="stretch")
             slide = create_slide_content(content)
 
         elif self.layout_type == "3-row":
-            top = self.content1.style({"width": 1600, "height": "33%", "margin-left": "auto", "margin-right": "auto"})
-            mid = self.content2.style({"width": 1600, "height": "33%", "margin-left": "auto", "margin-right": "auto"})
-            bot = self.content3.style({"width": 1600, "height": "33%", "margin-left": "auto", "margin-right": "auto"})
+            top = self.content1.style({"width": "100%", "height": "auto"})
+            mid = self.content2.style({"width": "100%", "height": "auto"})
+            bot = self.content3.style({"width": "100%", "height": "auto"})
 
-            content = mo.hstack([
-                self.get_spacer_vertical(),
-                mo.vstack([top, mid, bot], gap=1.5, justify="start", align="stretch")
-            ], gap=0, justify="center", align="center")
-
+            content = mo.vstack([top, mid, bot], gap=1.5, justify="start", align="stretch")
             slide = create_slide_content(content)
 
         else:  # Default layout
-            content = mo.hstack(
-                [
-                    self.get_spacer_vertical(),
-                    self.content1.style(
-                        {
-                            "width": 1600 ,
-                            "margin-left": "auto",
-                            "margin-right": "auto",
-                        }
-                    ),
-                    self.content2.style(
-                        {
-                            "width": 1600,
-                            "margin-left": "auto",
-                            "margin-right": "auto",
-                        }
-                    ),
-                ],
-                gap=0,
-                justify="center",
-                align="center",
-            )
+             # 2 columns equal width default? Original code had 2 columns with 1600px width each which implies stacking or overflow?
+             # Actually original code:
+             # content = mo.hstack([spacer, content1, content2])
+             # where content1 and content2 both had width 1600. This seems like they would stack or overflow horizontally.
+             # Assuming side-by-side or just one column if content2 is empty?
+             # Let's assume standard 2-column for default if 2 contents exist.
+             
+            content = mo.Html(f"""
+                <div class="layout-2-column">
+                    <div class="layout-column">
+                        {self.content1}
+                    </div>
+                    <div class="layout-column">
+                        {self.content2}
+                    </div>
+                </div>
+            """)
             slide = create_slide_content(content)
 
         slide = mo.vstack([slide, mo.Html("""<div class="page-break"></div>""")])
