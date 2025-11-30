@@ -68,7 +68,8 @@ async def _():
             "requests",
             "folium",
             "pulp",
-            "pyarrow"
+            "pyarrow",
+            "highspy"
         ]
 
         for pkg in packages:
@@ -846,8 +847,8 @@ def _(mo, sc):
 
 @app.cell(hide_code=True)
 def _(J, problem, pulp, y):
-    # Solve the problem with the default solver
-    status = problem.solve(pulp.PULP_CBC_CMD(msg=False))
+    # Solve the problem with HiGHS solver (works in WASM, unlike CBC which uses subprocess)
+    status = problem.solve(pulp.HiGHS(msg=False))
     open_warehouses = [j for j in J if y[j].value() > 0.5]
     return (open_warehouses,)
 
