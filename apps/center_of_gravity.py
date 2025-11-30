@@ -37,7 +37,7 @@ def _():
 
     use_local = local_data_dir.exists() and not in_wasm
     use_wasm = (wasm_data_dir.exists() or in_wasm) and not use_local
-    use_local = True
+    # use_local = True
 
     print(f"Detection: use_local={use_local}, use_wasm={use_wasm}, in_wasm={in_wasm}")
 
