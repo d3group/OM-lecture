@@ -66,7 +66,8 @@ async def _():
             "polars",
             "altair",
             "requests",
-            "folium"
+            "folium",
+            "pyarrow"
         ]
 
         for pkg in packages:
