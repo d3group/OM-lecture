@@ -101,6 +101,8 @@ def _():
     import numpy as np
     from typing import Iterable, Optional
     from folium import plugins
+    import warnings
+    warnings.filterwarnings("ignore", message=".*narwhals.*is_pandas_dataframe.*")
     return (
         Iterable,
         Optional,
