@@ -40,10 +40,22 @@ jobs:
         run: marimo export ipynb apps/vehicle_routing.py -o site/downloads/vehicle_routing.ipynb
 
       - name: Export center of gravity app as HTML
-        run: marimo export html-wasm apps/center_of_gravity.py -o site/center_of_gravity --mode edit
+        run: MARIMO_OUTPUT_MAX_BYTES=30000000 marimo export html-wasm apps/center_of_gravity.py -o site/center_of_gravity --mode edit
 
       - name: Export center of gravity app as Jupyter Notebook
         run: marimo export ipynb apps/center_of_gravity.py -o site/downloads/center_of_gravity.ipynb
+
+      - name: Export warehouse location part 1 app as HTML
+        run: MARIMO_OUTPUT_MAX_BYTES=30000000 marimo export html-wasm apps/warehouse_location_part_1.py -o site/warehouse_location_part_1 --mode edit
+
+      - name: Export warehouse location part 1 app as Jupyter Notebook
+        run: marimo export ipynb apps/warehouse_location_part_1.py -o site/downloads/warehouse_location_part_1.ipynb
+
+      - name: Export warehouse location part 2 app as HTML
+        run: MARIMO_OUTPUT_MAX_BYTES=30000000 marimo export html-wasm apps/warehouse_location_part_2.py -o site/warehouse_location_part_2 --mode edit
+
+      - name: Export warehouse location part 2 app as Jupyter Notebook
+        run: marimo export ipynb apps/warehouse_location_part_2.py -o site/downloads/warehouse_location_part_2.ipynb
 
       - name: Upload Pages Artifact
         if: github.ref == 'refs/heads/main'
