@@ -68,8 +68,7 @@ async def _():
             "requests",
             "folium",
             "pulp",
-            "pyarrow",
-            "highspy"
+            "pyarrow"
         ]
 
         for pkg in packages:
@@ -95,6 +94,116 @@ def _():
     import warnings
     warnings.filterwarnings("ignore", message=".*narwhals.*is_pandas_dataframe.*")
     return folium, mo, np, pl, pulp
+
+
+@app.cell(hide_code=True)
+def _(np, pulp):
+    # PuLP to SciPy solver for WASM compatibility
+    # PuLP's CBC solver uses subprocess which doesn't work in WASM,
+    # so we convert the PuLP model to scipy format and solve with HiGHS
+    from scipy.sparse import coo_matrix
+    from scipy.optimize import linprog
+
+    def pulp_to_scipy_linprog(prob):
+        """
+        Convert a PuLP LP (prob) into the data structures expected by scipy.optimize.linprog.
+        """
+        variables = [v for v in prob.variables() if v.name != "__dummy"]
+        n_vars = len(variables)
+        var_index = {v: i for i, v in enumerate(variables)}
+
+        c = np.zeros(n_vars, dtype=float)
+        for v, coef in prob.objective.items():
+            if v.name == "__dummy":
+                continue
+            c[var_index[v]] = float(coef)
+
+        constant_offset = float(prob.objective.constant or 0.0)
+        if prob.sense == pulp.LpMaximize:
+            c = -c
+            constant_offset = -constant_offset
+
+        ub_rows, ub_cols, ub_data, b_ub = [], [], [], []
+        eq_rows, eq_cols, eq_data, b_eq = [], [], [], []
+        ub_count, eq_count = 0, 0
+
+        for constr in prob.constraints.values():
+            sense = constr.sense
+            const_term = float(constr.constant or 0.0)
+
+            if sense == pulp.LpConstraintLE:
+                for v, coef in constr.items():
+                    if v.name == "__dummy":
+                        continue
+                    ub_rows.append(ub_count)
+                    ub_cols.append(var_index[v])
+                    ub_data.append(float(coef))
+                b_ub.append(-const_term)
+                ub_count += 1
+            elif sense == pulp.LpConstraintGE:
+                for v, coef in constr.items():
+                    if v.name == "__dummy":
+                        continue
+                    ub_rows.append(ub_count)
+                    ub_cols.append(var_index[v])
+                    ub_data.append(-float(coef))
+                b_ub.append(const_term)
+                ub_count += 1
+            elif sense == pulp.LpConstraintEQ:
+                for v, coef in constr.items():
+                    if v.name == "__dummy":
+                        continue
+                    eq_rows.append(eq_count)
+                    eq_cols.append(var_index[v])
+                    eq_data.append(float(coef))
+                b_eq.append(-const_term)
+                eq_count += 1
+
+        A_ub = coo_matrix((ub_data, (ub_rows, ub_cols)), shape=(ub_count, n_vars)).tocsr() if ub_count > 0 else None
+        b_ub = np.array(b_ub, dtype=float) if ub_count > 0 else None
+        A_eq = coo_matrix((eq_data, (eq_rows, eq_cols)), shape=(eq_count, n_vars)).tocsr() if eq_count > 0 else None
+        b_eq = np.array(b_eq, dtype=float) if eq_count > 0 else None
+
+        bounds = []
+        integrality = np.zeros(n_vars, dtype=int)
+        for i, v in enumerate(variables):
+            lb = float(v.lowBound) if v.lowBound is not None else -np.inf
+            ub = float(v.upBound) if v.upBound is not None else np.inf
+            bounds.append((lb, ub))
+            if v.cat in (pulp.LpInteger, pulp.LpBinary):
+                integrality[i] = 1
+
+        return {
+            'c': c, 'A_ub': A_ub, 'b_ub': b_ub, 'A_eq': A_eq, 'b_eq': b_eq,
+            'bounds': bounds, 'integrality': integrality,
+            'constant_offset': constant_offset, 'variables_list': variables,
+        }
+
+    def solve_with_scipy(prob):
+        """
+        Solve a PuLP problem using SciPy's linprog with HiGHS solver.
+        Works in WASM where PuLP's CBC solver fails due to subprocess restrictions.
+        """
+        data = pulp_to_scipy_linprog(prob)
+        result = linprog(
+            c=data['c'], A_ub=data['A_ub'], b_ub=data['b_ub'],
+            A_eq=data['A_eq'], b_eq=data['b_eq'],
+            bounds=data['bounds'], integrality=data['integrality'],
+            method='highs',
+        )
+
+        if result.success:
+            for var_obj, xval in zip(data['variables_list'], result.x):
+                var_obj.varValue = xval
+            obj = result.fun + data['constant_offset']
+            if prob.sense == pulp.LpMaximize:
+                obj = -obj
+            prob.objective_value = obj
+            prob.status = pulp.LpStatusOptimal
+        else:
+            prob.status = pulp.LpStatusNotSolved
+        return prob
+    return (solve_with_scipy,)
 
 
 @app.cell(hide_code=True)
@@ -846,9 +955,9 @@ def _(mo, sc):
 
 
 @app.cell(hide_code=True)
-def _(J, problem, pulp, y):
-    # Solve the problem with HiGHS solver (works in WASM, unlike CBC which uses subprocess)
-    status = problem.solve(pulp.HiGHS(msg=False))
+def _(J, problem, solve_with_scipy, y):
+    # Solve using scipy's HiGHS (works in WASM, unlike PuLP's CBC which uses subprocess)
+    solve_with_scipy(problem)
     open_warehouses = [j for j in J if y[j].value() > 0.5]
     return (open_warehouses,)
 
@@ -1197,11 +1306,6 @@ def _(mo, sc):
     )
 
     blockSummarySlide.render()
-    return
-
-
-@app.cell
-def _():
     return
 
 
