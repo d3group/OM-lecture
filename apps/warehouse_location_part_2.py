@@ -48,7 +48,7 @@ def _():
             IMG_BASE = "apps/public/wlp/images"
         else:
             # WASM/deployed mode - use GitHub raw URLs for data files
-            BASE = raw_url("apps", "public", "cog", "data")
+            BASE = raw_url("apps", "public", "wlp", "data")
             IMG_BASE = "public/wlp/images"  # Images work with relative paths
 
     print(f"Using BASE: {DataURLs.BASE}")
@@ -91,6 +91,8 @@ def _():
     import numpy as np
     import pulp
     import folium
+    import warnings
+    warnings.filterwarnings("ignore", message=".*narwhals.*is_pandas_dataframe.*")
     return folium, mo, np, pl, pulp
 
 

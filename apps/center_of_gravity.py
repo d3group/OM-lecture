@@ -91,6 +91,8 @@ def _():
     import requests
     import folium
     from typing import Optional
+    import warnings
+    warnings.filterwarnings("ignore", message=".*narwhals.*is_pandas_dataframe.*")
     return alt, folium, mo, np, pl, requests
 
 
