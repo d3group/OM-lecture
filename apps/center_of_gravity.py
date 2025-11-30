@@ -818,7 +818,7 @@ def _(alt, pl):
         Create an interactive chart where points can be clicked to select/unselect.
         The CoG is calculated and displayed dynamically based on selection.
         """
-        points = create_cog_example_data()
+        points = create_cog_example_data().to_pandas()
 
         # Create click selection (multi-select with toggle, start empty)
         # toggle='true' (string) makes every click toggle without needing shift key
