@@ -20,9 +20,7 @@ def _():
 
     class DataURLs:
         BASE = raw_url("apps", "public", "data", "supply_planning")
-        QR_PARAMS = f"{BASE}/qr_policy_parameters.csv"
-        # Use local path for the generated file
-        SUPPLY_PLAN = "apps/public/data/supply_planning/supply_plan_simulation_v2.csv"
+        SUPPLY_PLAN = f"{BASE}/supply_plan_simulation_v2.csv"
 
 
 
@@ -36,12 +34,13 @@ def _():
             "data.py": f"{BASE}/data.py",
             "forecast.py": f"{BASE}/forecast.py",
             "slides.py": f"{BASE}/slides.py",
-            "inventory.py": f"{BASE}/inventory.py",
             "mrp.py": f"{BASE}/mrp.py",
         }
         PACKAGES = [
             "pandas",
             "altair",
+            "numpy",
+            "typing_extensions",
         ]
     return DataURLs, UtilsURLs
 
@@ -141,7 +140,6 @@ def _(utils_manager):
     print("Files downloaded:", utils_manager.files_downloaded)
     from utils.slides import SlideCreator
     from utils.data import DataLoader
-    from utils.inventory import SimpleForecastPlotter, SafetyStockPlotter
     from utils.mrp import MRPLogic
     from sklearn.utils import Bunch
     import marimo as mo
