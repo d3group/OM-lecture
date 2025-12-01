@@ -37,6 +37,7 @@ def _():
             "forecast.py": f"{BASE}/forecast.py",
             "slides.py": f"{BASE}/slides.py",
             "inventory.py": f"{BASE}/inventory.py",
+            "mrp.py": f"{BASE}/mrp.py",
         }
         PACKAGES = [
             "pandas",
