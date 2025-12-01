@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.18.0"
+__generated_with = "0.18.1"
 app = marimo.App(
     width="medium",
     app_title="Supply Planning and Purchasing",
@@ -41,12 +41,6 @@ def _():
         PACKAGES = [
             "pandas",
             "altair",
-            "scikit-learn",
-            "numpy",
-            "statsmodels",
-            "scipy",
-            "typing_extensions",
-            "utilsforecast"
         ]
     return DataURLs, UtilsURLs
 
@@ -198,7 +192,7 @@ def _(mo, sc):
     basic_supply_mng = sc.create_slide("Step 1: From Inventory Planning in one DC to Gross Requirements for Phoenix", layout_type="1-column", newSection=" ")
     basic_supply_mng.content1 = mo.md(
         """
-        In Chapter 3 you learned how Phoenix’s DC in Fürth plans its inventory using a **(Q, R) policy**. The same planning logic runs in all other **17 Phoenix DCs**. \n
+        In Chapter 3 you learned how Phoenix’s DC in Fürth plans its inventory using a **(Q, R) policy**. The same planning logic runs in all of Phoenix's **17 DCs**. \n
         By knowing each DC’s (Q, R) parameters, and forecasted daily demand, we can **anticipate how much each DC will order** from the central warehouse. We now want to aggregate these demands to know how much of the product we have to ship from our central warehouse to the DCs. 
 
     """
@@ -617,10 +611,10 @@ def _(mo):
 @app.cell
 def _(alt, eoq_slider, inv_df_s3, math, mo, moq_slider, mult_slider, pd, sc):
     # Slide 4a: rule only (compact)
-    step4_rule = sc.create_slide("Step 4a: Planned Order Receipts (Rule)", layout_type="1-column")
+    step4_rule = sc.create_slide("Step 4: Planned Order Receipts (Rule)", layout_type="1-column")
     step4_rule.content1 = mo.md(
         r"""
-        When a net requirement occurs in period $t$, the central warehouse must create a Planned Order Receipt, $POR_t$. We use a fixed-lot rule based on: the central EOQ, $EOQ^{central}$, the Minimum Order Quantity, $MOQ$, and the order multiple, $m$ (for example: orders must be in multiples of 100 packs)
+        When a net requirement occurs in period $t$, the central warehouse must create a Planned Order Receipt, $POR_t$. We use a fixed-lot rule based on: the Economic Order Quantity (EOQ) of the central warehouse ($EOQ^{central}$), the Minimum Order Quantity ($MOQ$), and the order multiple ($m$) (for example: orders must be in multiples of 100 packs)
 
 
         \[
@@ -639,7 +633,7 @@ def _(alt, eoq_slider, inv_df_s3, math, mo, moq_slider, mult_slider, pd, sc):
     )
 
     # Slide 4b: interactive lot sizing and chart
-    step4_calc = sc.create_slide("Step 4b: Planned Order Receipts (Interactive)", layout_type="2-row")
+    step4_calc = sc.create_slide("Step 4: Planned Order Receipts (Illustration)", layout_type="2-row")
 
     step4_calc.content1 = mo.vstack(
         [
