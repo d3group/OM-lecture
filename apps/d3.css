@@ -75,9 +75,13 @@
 
 
 @media print {
+  .slide-container {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
 
-  .page,
   .page-break {
+    page-break-after: always;
     break-after: page;
   }
 }
