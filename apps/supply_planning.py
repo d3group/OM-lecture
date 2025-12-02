@@ -12,7 +12,7 @@ app = marimo.App(
 def _():
     GH_USER = "d3group"
     GH_REPO = "OM-lecture"
-    BRANCH = "purchasing"
+    BRANCH = "main"
 
     def raw_url(*parts: str) -> str:
         path = "/".join(parts)
