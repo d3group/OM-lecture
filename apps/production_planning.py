@@ -1,10 +1,9 @@
 import marimo
 
-__generated_with = "0.18.1"
+__generated_with = "0.18.0"
 app = marimo.App(
     width="medium",
     app_title="Production Planning and Scheduling",
-    layout_file="layouts/production_planning.slides.json",
     css_file="d3.css",
 )
 
@@ -19,88 +18,19 @@ def _():
     import math
     import base64
     import textwrap
-    import json
     from dataclasses import dataclass
     from typing import Optional, Iterable
     import html
-    return Optional, alt, base64, dataclass, html, json, mo, np, pd, pulp
-
-
-@app.cell
-def _(alt, months_list, pd):
-    def make_split_chart(df_long):
-        # Two side-by-side charts per product row
-        # Manual iteration to avoid "HConcatChart object has no attribute facet"
-
-        products = sorted(df_long["Product"].unique())
-        rows = []
-
-        for i, p in enumerate(products):
-            # Filter for this product
-            df_p = df_long[df_long["Product"] == p]
-
-            # Save vertical space: only show X-axis labels on the bottom row
-            is_last_row = (i == len(products) - 1)
-            x_axis_def = alt.Axis(title=None) if is_last_row else alt.Axis(labels=False, ticks=False, title=None, domain=False)
-
-            base = alt.Chart(df_p).encode(x=alt.X("Month:N", sort=months_list, axis=x_axis_def))
-
-            # --- Unified Color Scale ---
-            # Define one scale for all metrics to avoid Altair resolving conflicts incorrectly
-            domain_all = ["Production", "Demand", "On-Hand", "Backorders"]
-            range_all = ["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]
-
-            # --- Left Chart: Flow (Prod/Demand) ---
-            # Dynamic domain with minimum of 1000
-            max_flow = df_p[df_p["Metric"].isin(["Production", "Demand"])]["Units"].max()
-            domain_flow_top = max(1000, max_flow * 1.05) if not pd.isna(max_flow) else 1000
-
-            chart_flow = base.transform_filter(
-                alt.FieldOneOfPredicate(field="Metric", oneOf=["Production", "Demand"])
-            ).mark_line(strokeWidth=2).encode(
-                # Fixed minExtent for alignment, tickCount=3 to force showing top/bottom labels (0, mid, max)
-                y=alt.Y("Units:Q", title="Prod / Demand", axis=alt.Axis(titleColor="#3b82f6", minExtent=40, tickCount=3), scale=alt.Scale(domain=[0, domain_flow_top])),
-                color=alt.Color("Metric:N", scale=alt.Scale(domain=domain_all, range=range_all), legend=None)
-            )
-            points_flow = chart_flow.mark_circle(size=20)
-            # Increased slightly to 45px to allow axis labels to render
-            final_flow = (chart_flow + points_flow).properties(width=170, height=45)
-
-            # --- Right Chart: Stock (Inv/Back) ---
-            # Dynamic domain with minimum of 1000
-            max_stock = df_p[df_p["Metric"].isin(["On-Hand", "Backorders"])]["Units"].max()
-            domain_stock_top = max(1000, max_stock * 1.05) if not pd.isna(max_stock) else 1000
-
-            chart_stock = base.transform_filter(
-                alt.FieldOneOfPredicate(field="Metric", oneOf=["On-Hand", "Backorders"])
-            ).mark_line(strokeWidth=2, strokeDash=[4, 2]).encode(
-                # Fixed minExtent for alignment, tickCount=3 to force showing top/bottom labels
-                y=alt.Y("Units:Q", title="Inv / Back", axis=alt.Axis(titleColor="#ef4444", minExtent=40, tickCount=3), scale=alt.Scale(domain=[0, domain_stock_top])),
-                color=alt.Color("Metric:N", scale=alt.Scale(domain=domain_all, range=range_all), legend=None)
-            )
-            points_stock = chart_stock.mark_circle(size=20)
-            final_stock = (chart_stock + points_stock).properties(width=170, height=45)
-
-            # Combine side-by-side, add Product title
-            row_grp = (final_flow | final_stock).properties(title=p)
-            rows.append(row_grp)
-
-        return alt.vconcat(*rows, spacing=5)
-    return (make_split_chart,)
+    return Optional, base64, dataclass, html, mo, np, pd, pulp
 
 
 @app.cell(hide_code=True)
 def _(np, pulp):
-    # PuLP to SciPy solver for WASM compatibility
-    # PuLP's CBC solver uses subprocess which doesn't work in WASM,
-    # so we convert the PuLP model to scipy format and solve with HiGHS
+    # PuLP to SciPy solver shim for WASM compatibility
     from scipy.sparse import coo_matrix
     from scipy.optimize import linprog
 
     def pulp_to_scipy_linprog(prob):
-        """
-        Convert a PuLP LP (prob) into the data structures expected by scipy.optimize.linprog.
-        """
         variables = [v for v in prob.variables() if v.name != "__dummy"]
         n_vars = len(variables)
         var_index = {v: i for i, v in enumerate(variables)}
@@ -173,10 +103,6 @@ def _(np, pulp):
         }
 
     def solve_with_scipy(prob):
-        """
-        Solve a PuLP problem using SciPy's linprog with HiGHS solver.
-        Works in WASM where PuLP's CBC solver fails due to subprocess restrictions.
-        """
         data = pulp_to_scipy_linprog(prob)
         result = linprog(
             c=data['c'], A_ub=data['A_ub'], b_ub=data['b_ub'],
@@ -196,51 +122,7 @@ def _(np, pulp):
         else:
             prob.status = pulp.LpStatusNotSolved
         return prob
-    return
-
-
-@app.cell(hide_code=True)
-async def _(json):
-    # Load pre-computed solutions cache for instant WASM performance
-    import os as _os
-    import sys as _sys
-    
-    production_cache = {}
-    
-    try:
-        if _sys.platform == 'emscripten':
-            # WASM/Pyodide: Fetch via HTTP (Async)
-            # Use pyodide.http.pyfetch for robust fetch
-            import pyodide.http
-            _url = "public/mps/production_cache.json"
-            
-            # Use await with pyfetch
-            _res = await pyodide.http.pyfetch(_url)
-            if _res.ok:
-                production_cache = await _res.json()
-            else:
-                print(f"Fetch failed: {_res.status} {_res.status_text}")
-        else:
-            # Local Python: File System access
-            _possible_paths = [
-                "public/mps/production_cache.json",
-                "apps/public/mps/production_cache.json"
-            ]
-            _cache_path = next((p for p in _possible_paths if _os.path.exists(p)), None)
-            
-            if _cache_path:
-                with open(_cache_path, "r") as _f:
-                    production_cache = json.load(_f)
-            else:
-                pass
-                
-    except Exception as e:
-        # Fallback: empty cache (will solve on-the-fly)
-        # Log error to console for debugging
-        print(f"Warning: Failed to load production_cache: {e}")
-        pass
-        
-    return (production_cache,)
+    return (solve_with_scipy,)
 
 
 @app.cell(hide_code=True)
@@ -571,7 +453,7 @@ def _(SlideCreator):
 
 @app.cell(hide_code=True)
 def _(sc):
-    titleSlide = sc.create_title_slide("Production Planning - A Basic Model", subtitle="")
+    titleSlide = sc.create_title_slide("Production Planning", subtitle="")
     sc.styles()
     titleSlide.render()
     return
@@ -582,7 +464,7 @@ def _(mo, sc):
     caseExampleSlide = sc.create_slide("Case Example", layout_type="2-row")
     caseExampleSlide.content1 = mo.md(
         r'''
-        - Consider a pharmaceutical manufacturer like Sandoz that makes Amoxicillin-based products in one dedicated (beta-lactam) facility
+        - Consider a pharmaceutical (contract) manufacturer that makes Amoxicillin-based products for various customers (e.g. Ratiopharm) in one dedicated (beta-lactam) facility
         - Products:
             1. Amoxicillin 500 mg film-coated tablets, box of 20
             2. Amoxicillin 875 mg film-coated tablets, box of 10
@@ -597,7 +479,7 @@ def _(mo, sc):
     return (caseExampleSlide,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(caseExampleSlide):
     caseExampleSlide.render()
     return
@@ -631,7 +513,7 @@ def _(base64, mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, np, pd, sc):
     # Data Generation
     products_list = [
@@ -687,14 +569,14 @@ def _(mo, np, pd, sc):
             *   To make life simpler, we do not distinguish between confirmed orders and forecasts, but simply say that we have Demand $D_{it}$ for product $i$ ($i=1,...,8$) in period $t$ ($t=1,...,6$).
             '''
         ),
-        mo.ui.table(df_demand, label="Demand $D_{it}$", selection=None)
+        mo.ui.table(df_demand, label="Demand D_it", selection=None)
     ])
 
     demandSlide.render()
     return df_demand, df_usage, months_list, products_list
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     batchSlide = sc.create_slide("Batch Sizes and Lots", layout_type="1-column")
 
@@ -715,23 +597,23 @@ def _(mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     batchSlide2 = sc.create_slide("Batch Sizes and Lots (2)", layout_type="1-column")
 
     batchSlide2.content1 = mo.md(
         r'''
-     Why we don't just use ELS in our pharma example:
+    ## Why we don't just use ELS in a pharma CMO:
 
     Even if $ELS_i$ is "economically optimal", we must respect:
 
     - **Capacity:** shared tablet line, campaigns, monthly hours
 
-    - **Technical limits:** min/max batch size determined by equipment
+    - **Technical limits:** min/max batch size from equipment
 
     - **Regulatory limits:** validated batch size ranges (dossier)
 
-    - **Contracts:** customer-specified batch sizes/multiples
+    - **Contracts:** client-specified batch sizes/ multiples
 
     $\rightarrow$ In practice: use $ELS_i$ as a **starting point**, then choose a feasible **batch size $b_i$** satisfying these constraints.
         '''
@@ -741,13 +623,13 @@ def _(mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     inventorySlide = sc.create_slide("Production decisions and inventory over time", layout_type="1-column")
 
     inventorySlide.content1 = mo.md(
         r'''
-    For the moment, let's look at **one product $i$** over time.
+    We look at **one product $i$** over time.
     Assume that we are at the end of the month (e.g. January) and want to plan for the next six months (e.g., from February (t=1) to July (t=6)).
     At the end of January we have an inventory of $I_{i0}$, which is also the initial inventory (starting inventory) at the beginning of February (t=1).
     At the start of any month $t$, we have: Inventory from last month: $I_{i,t-1}$
@@ -755,7 +637,7 @@ def _(mo, sc):
     During month $t$:
     - We produce $y_{it}$ batches
     - Each batch has size $b_i$
-    - Total production in units in month $t$: $b_i \cdot y_{it}$
+    - Total production in units in month t: $b_i \cdot y_{it}$
 
     At the end of month $t$, we get a new inventory position $I_{it}$: $\quad I_{it} = I_{i,t-1} + b_i \cdot y_{it} - D_{it}$
 
@@ -771,7 +653,7 @@ def _(mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(df_demand, df_usage, mo, products_list):
     # Interactive sliders for one product - use first product from generated data
     product_idx = 0
@@ -803,9 +685,8 @@ def _(df_demand, df_usage, mo, products_list):
     )
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
-    alt,
     batch_size,
     df_demand,
     mo,
@@ -851,79 +732,35 @@ def _(
     total_backorders = int(df["Backorders"].sum())
     total_holding = int(df["On-Hand"].sum())
 
-    # Create title with results
-    _title_text = alt.TitleParams(
-        text=["Interactive MPS Plan"],
-        subtitle=[f"🟢 On-Hand: {total_holding:,} | 🔴 Backorders: {total_backorders:,}"],
-        fontSize=16,
-        subtitleFontSize=14,
-        subtitleColor="#374151"
-    )
+    # Slide - simple 1-column
+    interactiveSlide = sc.create_slide("Interactive", layout_type="1-column")
 
-    # Transform data for visualization: Production, Demand, On-Hand, Backorders
-    _chart_df = df[["Month", "Production", "Demand", "On-Hand", "Backorders"]].melt(
-        id_vars=["Month"], 
-        var_name="Metric", 
-        value_name="Units"
-    )
-
-    # Line chart for Production and Demand
-    _lines = alt.Chart(_chart_df).mark_line(point=True, strokeWidth=3).encode(
-        x=alt.X("Month:N", sort=months_list, title="Month"),
-        y=alt.Y("Units:Q", title="Units", scale=alt.Scale(domain=[0, 8000])),
-        color=alt.Color("Metric:N", 
-            scale=alt.Scale(
-                domain=["Production", "Demand", "On-Hand", "Backorders"], 
-                range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]
-            ),
-            legend=alt.Legend(title="Metric", orient="top")
-        ),
-        strokeDash=alt.condition(
-            alt.FieldOneOfPredicate(field="Metric", oneOf=["On-Hand", "Backorders"]),
-            alt.value([4, 2]),  # Dashed for inventory/backorders
-            alt.value([0])      # Solid for production/demand
-        ),
-        tooltip=["Month", "Metric", "Units"]
-    ).properties(
-        width=500, 
-        height=350,
-        title=_title_text
-    )
-
-    _chart = _lines
-
-    # Slide with 2-column layout for better side-by-side display
-    interactiveSlide = sc.create_slide("Interactive: Single-Product MPS", layout_type="2-column")
-
-    # Left Column: Controls
     interactiveSlide.content1 = mo.vstack([
-        mo.md(f'''**Product:** {product_name} | **Batch Size:** {_b_i} units | **Initial Inventory:** {_I_0} units'''),
-        mo.md("---"),
-        mo.md("**Set number of batches per month:**"),
-        mo.hstack([
-            mo.vstack([mo.md("**Jan**"), slider_jan], align="center"),
-            mo.vstack([mo.md("**Feb**"), slider_feb], align="center"),
-        ], justify="start", gap=1),
-        mo.hstack([
-            mo.vstack([mo.md("**Mar**"), slider_mar], align="center"),
-            mo.vstack([mo.md("**Apr**"), slider_apr], align="center"),
-        ], justify="start", gap=1),
-        mo.hstack([
-            mo.vstack([mo.md("**May**"), slider_may], align="center"),
-            mo.vstack([mo.md("**Jun**"), slider_jun], align="center"),
-        ], justify="start", gap=1),
-    ], gap=0.5)
+        mo.md(f'''
+    *Include a slider with the number of batches for t=1,...,6. Display positive inventories and backlogs.*
 
-    # Right Column: Chart
-    interactiveSlide.content2 = mo.vstack([
-         mo.ui.altair_chart(_chart),
-    ], align="center", justify="center")
+    **Product:** {product_name} | **Batch Size $b_i$:** {_b_i} | **Initial Inventory $I_0$:** {_I_0}
+        '''),
+        mo.hstack([
+            mo.vstack([mo.md("**Jan (t=1)**"), slider_jan]),
+            mo.vstack([mo.md("**Feb (t=2)**"), slider_feb]),
+            mo.vstack([mo.md("**Mar (t=3)**"), slider_mar]),
+            mo.vstack([mo.md("**Apr (t=4)**"), slider_apr]),
+            mo.vstack([mo.md("**May (t=5)**"), slider_may]),
+            mo.vstack([mo.md("**Jun (t=6)**"), slider_jun]),
+        ], justify="start", gap=1.5),
+        mo.md(f'''
+    **Summary:** On-Hand = **{total_holding}** | Backorders = **{total_backorders}**
+        '''),
+        mo.ui.table(df[["Month", "Demand", "Batches (y)", "Production", "On-Hand", "Backorders"]], 
+                    selection=None)
+    ], gap=1)
 
     interactiveSlide.render()
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     objectiveSlide1 = sc.create_slide("The overall objective (1)", layout_type="1-column")
 
@@ -946,21 +783,21 @@ def _(mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     objectiveSlide2 = sc.create_slide("The overall objective (2)", layout_type="1-column")
 
     objectiveSlide2.content1 = mo.md(
         r'''
     **Cost in month $t$**
-    - If $I_{it} > 0$: we hold inventory and pay $\quad C_{it} = h_i \cdot I_{it}$
-    - If $I_{it} < 0$: we have backorders of $-I_{it}$ units and pay $\quad C_{it} = p_i \cdot (-I_{it})$
+    - If $I_{it} > 0$: we hold inventory and pay $\quad C_t = h_i \cdot I_{it}$
+    - If $I_{it} < 0$: we have backorders of $-I_{it}$ units and pay $\quad C_t = p_i \cdot (-I_{it})$
 
-    Like in Chapter 3 (Inventory Planning), we can write the monthly cost as a function of the inventory position:
-    $$C_{it}(I_{it}) = \begin{cases} h_i \, I_{it} & \text{if } I_{it} \geq 0 \\ p_i \, (-I_{it}) & \text{if } I_{it} < 0 \end{cases}$$
+    So we can write the monthly cost as a function of the inventory position:
+    $$C_t(I_{it}) = \begin{cases} h_i \, I_{it} & \text{if } I_{it} \geq 0 \\ p_i \, (-I_{it}) & \text{if } I_{it} < 0 \end{cases}$$
 
-    **Total cost over the 6 months and all 8 products**
-    $$\text{Total cost} = \sum_{t=1}^{6}\sum_{i=1}^{8}  C_{it}(I_{it})$$
+    **Total cost over the 6 months**
+    $$\text{Total cost} = \sum_{t=1}^{6} C_t(I_{it})$$
         '''
     )
 
@@ -968,7 +805,7 @@ def _(mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     capacitySlide1 = sc.create_slide("Capacity constraints (1)", layout_type="1-column")
 
@@ -978,7 +815,7 @@ def _(mo, sc):
 
     For each month $t$:
     - The line has a **limited number of hours** available:
-      - $Cap_t$: available capacity in hours per month
+      - $Cap_t$: available capacity in hours (e.g., per month)
     - For each product $i$:
       - We produce $y_{it}$ batches
       - Each batch of product $i$ needs $u_i$ hours of **run time** on the line
@@ -990,7 +827,7 @@ def _(mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     capacitySlide2 = sc.create_slide("Capacity constraints (2)", layout_type="1-column")
 
@@ -1003,7 +840,7 @@ def _(mo, sc):
     $$\sum_{i=1}^{8} \left( u_i \, y_{it} + st_i \, z_{it} \right) \leq Cap_t, \quad \forall t$$
 
     **Key message:**
-    The batch decisions $y_{it}$ and the choice of which products to run $z_{it}$ are limited by the **shared line capacity**.
+    The batch decisions $y_{it}$ and the choice of which products to run $z_{it}$ are limited by the **shared line capacity** (run time + setups must fit into $Cap_t$ each month).
         '''
     )
 
@@ -1011,13 +848,13 @@ def _(mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     moreConstraintsSlide = sc.create_slide("More constraints....", layout_type="1-column")
 
     moreConstraintsSlide.content1 = mo.md(
         r'''
-    We only have a setup (and we only incur the corresponding setup time) if we actually produce the product in that month.
+    We only want to pay setup time if we actually produce the product in that month.
 
     $$y_{it} \leq M_i \, z_{it}, \quad \forall i, t$$
 
@@ -1031,7 +868,7 @@ def _(mo, sc):
     $$y_{it} \in \mathbb{Z}_{\geq 0}, \qquad z_{it} \in \{0, 1\}, \qquad I_{it} \in \mathbb{R}, \quad \forall i, t$$
 
     - $y_{it}$: non-negative integer number of batches
-    - $z_{it}$: binary setup
+    - $z_{it}$: binary setup / campaign decision
     - $I_{it}$: inventory position (may be positive or negative)
         '''
     )
@@ -1040,7 +877,7 @@ def _(mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     overallModelSlide = sc.create_slide("The overall model...", layout_type="1-column")
 
@@ -1072,14 +909,17 @@ def _(
     df_usage,
     months_list,
     pd,
-    production_cache,
     products_list,
     pulp,
+    solve_with_scipy,
 ):
-    # ===== Model Configuration (for display) =====
-    # Cost parameters
-    _holding_cost = {_p: 0.5 for _p in products_list}  # h_i: €/unit/month
-    _penalty_cost = {_p: 5.0 for _p in products_list}  # p_i: €/unit/month
+    # Model parameters
+    _n_products = len(products_list)
+    _n_months = len(months_list)
+
+    # Cost parameters (assumed)
+    _holding_cost = {_p: 0.5 for _p in products_list}  # h_i: $/unit/month
+    _penalty_cost = {_p: 5.0 for _p in products_list}  # p_i: $/unit/month (backorders costly)
 
     # Batch sizes from data
     _batch_sizes = df_usage["Batch Size"].to_dict()  # b_i
@@ -1089,13 +929,17 @@ def _(
                           for _p in products_list}  # u_i
     _setup_times = df_usage["Setup Hours"].to_dict()  # st_i
 
-    # Capacity and initial inventory
-    capacity_val = 1800  # Cap_t: hours per month (increased from 1500 to allow trade-offs)
-    init_inv = 200  # Same for all products
-    _M = {_p: 20 for _p in products_list}  # Big-M for setup linking
+    # Capacity (same for all months for simplicity)
+    capacity_val = 1500  # Cap_t: hours per month
 
-    # ===== PuLP Model Definition (shown for educational purposes) =====
-    # NOTE: We define the model structure but load pre-computed results from cache
+    # Big-M for setup linking
+    _M = {_p: 20 for _p in products_list}  # Max batches per product per month
+
+    # Initial inventory
+    init_inv = 200  # Same for all products
+    _I_0 = {_p: init_inv for _p in products_list}
+
+    # Create model
     _model = pulp.LpProblem("ProductionPlanning", pulp.LpMinimize)
 
     # Decision variables
@@ -1111,7 +955,6 @@ def _(
     )
 
     # Constraints
-    _I_0 = {_p: init_inv for _p in products_list}
     for _p in products_list:
         for _t_idx, _t in enumerate(months_list):
             _prev_inv = _I_0[_p] if _t_idx == 0 else (_I_plus[_p][months_list[_t_idx-1]] - _I_minus[_p][months_list[_t_idx-1]])
@@ -1126,36 +969,49 @@ def _(
             for _p in products_list
         ) <= capacity_val, f"Cap_{_t}"
 
-    # ===== Load pre-computed solution from cache (instant!) =====
-    # Use capacity=1800 solution for consistency with sensitivity sliders at default values
-    _cached = production_cache["capacity"].get("1800") if production_cache else None
+    # Solve
+    solve_with_scipy(_model)
 
-    if _cached and _cached.get("status") == "optimal":
-        _sol_data = [{"Product": _p[:15], **{f"y_{_t}": _cached["solution"][_p][_t] for _t in months_list}} for _p in products_list]
-        _inv_data = [{"Product": _p[:15], **{f"I_{_t}": _cached["inventory"][_p][_t] for _t in months_list}} for _p in products_list]
-        df_solution = pd.DataFrame(_sol_data)
+    # Extract solution
+    if _model.status == pulp.LpStatusOptimal:
+        _solution_data = []
+        for _p in products_list:
+            _row = {"Product": _p[:15]}
+            for _t in months_list:
+                _row[f"y_{_t}"] = int(_y[_p][_t].varValue) if _y[_p][_t].varValue else 0
+            _solution_data.append(_row)
+        df_solution = pd.DataFrame(_solution_data)
+
+        _inv_data = []
+        for _p in products_list:
+            _row = {"Product": _p[:15]}
+            for _t in months_list:
+                _inv_val = (_I_plus[_p][_t].varValue or 0) - (_I_minus[_p][_t].varValue or 0)
+                _row[f"I_{_t}"] = int(_inv_val)
+            _inv_data.append(_row)
         df_inventory = pd.DataFrame(_inv_data)
-        total_cost = _cached["total_cost"]
-        status_msg = f"**Optimal solution found!** Total Cost = **€{total_cost:,.0f}**"
+
+        total_cost = pulp.value(_model.objective)
+        status_msg = f"**Optimal solution found!** Total Cost = **${total_cost:,.0f}**"
     else:
-        df_solution = pd.DataFrame({"Status": ["No cached solution found"]})
+        df_solution = pd.DataFrame({"Status": ["No optimal solution found"]})
         df_inventory = pd.DataFrame()
-        status_msg = "**No cached solution found**"
+        status_msg = "**No optimal solution found**"
         total_cost = None
-    return capacity_val, init_inv, status_msg
+    return capacity_val, df_inventory, df_solution, init_inv, status_msg
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, sc):
     # === SLIDE: Cost Parameters ===
     costSlide = sc.create_slide("Parameters: Costs", layout_type="1-column")
 
     costSlide.content1 = mo.md('''
     **Holding Cost** $h_i$: Cost per unit of positive inventory per month
-    - $h_i = 0.50$ €/unit/month
+    - $h_i = 0.50$ $/unit/month
 
     **Penalty Cost** $p_i$: Cost per unit of backorder per month  
-    - $p_i = 5.00$ €/unit/month
+    - $p_i = 5.00$ $/unit/month
 
     *Note: Backorders are 10× more expensive than holding inventory!*
     ''')
@@ -1164,7 +1020,7 @@ def _(mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(capacity_val, init_inv, mo, sc):
     # === SLIDE: Capacity & Initial Inventory ===
     capSlide = sc.create_slide("Parameters: Capacity & Inventory", layout_type="1-column")
@@ -1181,14 +1037,14 @@ def _(capacity_val, init_inv, mo, sc):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(df_usage, mo, sc):
     # === SLIDE: Product Data ===
     prodDataSlide = sc.create_slide("Parameters: Product Data", layout_type="1-column")
 
     prodDataSlide.content1 = mo.vstack([
         mo.md('''**Product-Specific Parameters:**
-    - **Hours/Unit** $u_i$: Processing time per unit (boxes)
+    - **Hours/Unit**: Processing time per unit (boxes)
     - **Batch Size** $b_i$: Units per batch
     - **Setup Hours** $st_i$: Time for setup/cleaning per production run'''),
         mo.ui.table(df_usage, selection=None)
@@ -1198,566 +1054,345 @@ def _(df_usage, mo, sc):
     return
 
 
-@app.cell(hide_code=True)
-def _(
-    df_demand,
-    df_usage,
-    make_split_chart,
-    mo,
-    months_list,
-    pd,
-    production_cache,
-    products_list,
-):
-    # Prepare data for Optimal Solution slides
-    _cached_opt = production_cache["capacity"].get("1800") if production_cache else None
-    _opt_found = _cached_opt and _cached_opt.get("status") == "optimal"
+@app.cell
+def _(df_inventory, df_solution, mo, sc, status_msg):
+    # === SLIDE: Optimal Solution ===
+    solutionSlide = sc.create_slide("Optimal Solution", layout_type="1-column")
 
-    _df_sol_opt = pd.DataFrame()
-    _df_inv_opt = pd.DataFrame()
-    _chart_left_opt = None
-    _chart_right_opt = None
-    _legend_str_opt = None
-
-    if _opt_found:
-        # Tables Data
-        _sol_data = [{"Product": _p, **{f"{_t}": _cached_opt["solution"][_p][_t] for _t in months_list}} for _p in products_list]
-        _inv_data = [{"Product": _p, **{f"{_t}": _cached_opt["inventory"][_p][_t] for _t in months_list}} for _p in products_list]
-        _df_sol_opt = pd.DataFrame(_sol_data)
-        _df_inv_opt = pd.DataFrame(_inv_data)
-
-        # Charts Data
-        _viz_rows = []
-        for _p in products_list:
-            _batch_size = df_usage.loc[_p, "Batch Size"]
-            for _t in months_list:
-                _batches = _cached_opt["solution"][_p][_t]
-                _production = _batches * _batch_size
-                _demand = df_demand.loc[_p, _t]
-                _inventory = _cached_opt["inventory"][_p][_t]
-                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
-        _viz_df = pd.DataFrame(_viz_rows)
-        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
-
-        _products_left = products_list[:4]
-        _products_right = products_list[4:]
-
-        _chart_left_opt = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
-        _chart_right_opt = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
-
-        _legend_str_opt = mo.md(
-            """
-            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
-            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
-            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
-            <span style='color:#ef4444'><b>-- Backorders</b></span>
-            """
-        )
-
-    # Export to global scope with public names
-    chart_left_opt = _chart_left_opt
-    chart_right_opt = _chart_right_opt
-    df_inv_opt = _df_inv_opt
-    df_sol_opt = _df_sol_opt
-    legend_str_opt = _legend_str_opt
-    opt_found = _opt_found
-    return (
-        chart_left_opt,
-        chart_right_opt,
-        df_inv_opt,
-        df_sol_opt,
-        legend_str_opt,
-        opt_found,
-    )
-
-
-@app.cell(hide_code=True)
-def _(df_inv_opt, df_sol_opt, mo, opt_found, sc, status_msg):
-    # SLIDE: Our Master Production Schedule (MPS) 
-    if opt_found:
-        tableSlide = sc.create_slide("Our Master Production Schedule (MPS)", layout_type="1-column")
-        tableSlide.content1 = mo.vstack([
-            mo.md(f"**Result:** {status_msg}"),
-            mo.hstack([
-                mo.vstack([mo.md("**Production Plan (Batches):**"), mo.ui.table(df_sol_opt, selection=None, pagination=False)]),
-                mo.vstack([mo.md("**Inventory Levels:**"), mo.ui.table(df_inv_opt, selection=None, pagination=False)])
-            ], gap=2)
-        ], gap=0.5)
-    else:
-        tableSlide = sc.create_slide("Optimal Solution (Tables)", layout_type="1-column")
-        tableSlide.content1 = mo.md("**No cached solution found**")
-
-    tableSlide.render()
-    return
-
-
-@app.cell(hide_code=True)
-def _(
-    chart_left_opt,
-    chart_right_opt,
-    legend_str_opt,
-    mo,
-    opt_found,
-    sc,
-    status_msg,
-):
-    # SLIDE: Optimal Solution (Plots)
-    if opt_found:
-        solutionSlide = sc.create_slide("Optimal Solution (Plots)", layout_type="2-column")
-        # Left column: Status + Left Chart
-        solutionSlide.content1 = mo.vstack([
-            mo.md(f"{status_msg}"),
-            mo.ui.altair_chart(chart_left_opt)
-        ], gap=0.5)
-        # Right column: Legend + Right Chart
-        solutionSlide.content2 = mo.vstack([
-            legend_str_opt,
-            mo.ui.altair_chart(chart_right_opt)
-        ], gap=0.5)
-    else:
-        solutionSlide = sc.create_slide("Optimal Solution (Plots)", layout_type="1-column")
-        solutionSlide.content1 = mo.md("**No cached solution found**")
+    solutionSlide.content1 = mo.vstack([
+        mo.md(f"{status_msg}"),
+        mo.hstack([
+            mo.vstack([mo.md("**Production Plan (batches $y_{it}$):**"), mo.ui.table(df_solution, selection=None)]),
+            mo.vstack([mo.md("**Inventory ($I_{it}$, neg=backorder):**"), mo.ui.table(df_inventory, selection=None)])
+        ], gap=1)
+    ], gap=0.5)
 
     solutionSlide.render()
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     # Slider for sensitivity analysis
-    capacity_slider = mo.ui.slider(800, 2500, value=1800, step=100, label="Capacity (hours/month)", show_value=True)
+    capacity_slider = mo.ui.slider(800, 2500, value=1500, step=100, label="Capacity (hours/month)", show_value=True)
     return (capacity_slider,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     capacity_slider,
     df_demand,
     df_usage,
-    make_split_chart,
     mo,
     months_list,
     pd,
-    production_cache,
     products_list,
+    pulp,
     sc,
+    solve_with_scipy,
 ):
-    # Load solution from cache (instant!) instead of solving
+    # Re-solve with varied capacity
     _cap_val = capacity_slider.value
-    _cached = production_cache["capacity"].get(str(_cap_val)) if production_cache else None
 
-    if _cached and _cached.get("status") == "optimal":
-        _total_cost = _cached["total_cost"]
-        _total_backorders = _cached["total_backorders"]
-        _total_holding = _cached["total_holding"]
-        _status = f"✅ Cost: **€{_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
+    # Same parameters
+    _holding_cost = {_p: 0.5 for _p in products_list}
+    _penalty_cost = {_p: 5.0 for _p in products_list}
+    _batch_sizes = df_usage["Batch Size"].to_dict()
+    _run_time = {_p: df_usage.loc[_p, "Hours/Unit"] * df_usage.loc[_p, "Batch Size"] for _p in products_list}
+    _setup_times = df_usage["Setup Hours"].to_dict()
+    _M = {_p: 20 for _p in products_list}
+    _I_0 = {_p: 200 for _p in products_list}
 
-        # Build visualization data
-        _viz_rows = []
-        for _p in products_list:
-            _batch_size = df_usage.loc[_p, "Batch Size"]
-            for _t in months_list:
-                _batches = _cached["solution"][_p][_t]
-                _production = _batches * _batch_size
-                _demand = df_demand.loc[_p, _t]
-                _inventory = _cached["inventory"][_p][_t]
-                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
-        _viz_df = pd.DataFrame(_viz_rows)
-        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
+    # Create model
+    _model = pulp.LpProblem("ProductionPlanning_Sens", pulp.LpMinimize)
 
-        _products_left = products_list[:4]
-        _products_right = products_list[4:]
+    _y = pulp.LpVariable.dicts("y", (products_list, months_list), lowBound=0, cat='Integer')
+    _z = pulp.LpVariable.dicts("z", (products_list, months_list), cat='Binary')
+    _Ip = pulp.LpVariable.dicts("Ip", (products_list, months_list), lowBound=0)
+    _Im = pulp.LpVariable.dicts("Im", (products_list, months_list), lowBound=0)
 
-        _legend_str = mo.md(
-            """
-            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
-            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
-            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
-            <span style='color:#ef4444'><b>-- Backorders</b></span>
-            """
-        )
+    _model += pulp.lpSum(
+        _holding_cost[_p] * _Ip[_p][_t] + _penalty_cost[_p] * _Im[_p][_t]
+        for _p in products_list for _t in months_list
+    )
 
-        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
-        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
+    for _p in products_list:
+        for _t_idx, _t in enumerate(months_list):
+            _prev_inv = _I_0[_p] if _t_idx == 0 else (_Ip[_p][months_list[_t_idx-1]] - _Im[_p][months_list[_t_idx-1]])
+            _demand = df_demand.loc[_p, _t]
+            _production = _batch_sizes[_p] * _y[_p][_t]
+            _model += _Ip[_p][_t] - _Im[_p][_t] == _prev_inv + _production - _demand
+            _model += _y[_p][_t] <= _M[_p] * _z[_p][_t]
 
-        sensitivitySlide = sc.create_slide("Sensitivity: Capacity", layout_type="2-column")
-        # Left: Slider + Chart
-        sensitivitySlide.content1 = mo.vstack([
-            mo.hstack([mo.md("**Vary Capacity $Cap_t$:**"), capacity_slider], justify="start", gap=1),
-            mo.md("&nbsp;"),
-            mo.ui.altair_chart(_chart_left)
-        ], gap=0.3)
-        # Right: Status + Legend + Chart
-        sensitivitySlide.content2 = mo.vstack([
-            mo.md(f"**Result:** {_status}"),
-            _legend_str,
-            mo.ui.altair_chart(_chart_right)
-        ], gap=0.3)
+    for _t in months_list:
+        _model += pulp.lpSum(
+            _run_time[_p] * _y[_p][_t] + _setup_times[_p] * _z[_p][_t]
+            for _p in products_list
+        ) <= _cap_val
+
+    solve_with_scipy(_model)
+
+    # Extract results
+    if _model.status == pulp.LpStatusOptimal:
+        _total_cost = pulp.value(_model.objective)
+        _total_backorders = sum(_Im[_p][_t].varValue or 0 for _p in products_list for _t in months_list)
+        _total_holding = sum(_Ip[_p][_t].varValue or 0 for _p in products_list for _t in months_list)
+        _status = f"✅ Cost: **${_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
+
+        # Build solution tables
+        _sol_data = [{"Product": _p[:12], **{f"y_{_t}": int(_y[_p][_t].varValue or 0) for _t in months_list}} for _p in products_list]
+        _inv_data = [{"Product": _p[:12], **{f"I_{_t}": int((_Ip[_p][_t].varValue or 0) - (_Im[_p][_t].varValue or 0)) for _t in months_list}} for _p in products_list]
+        _df_sol = pd.DataFrame(_sol_data)
+        _df_inv = pd.DataFrame(_inv_data)
     else:
-        sensitivitySlide = sc.create_slide("Sensitivity: Capacity", layout_type="1-column")
-        sensitivitySlide.content1 = mo.vstack([
-            mo.hstack([mo.md("**Vary Capacity $Cap_t$:**"), capacity_slider], justify="start", gap=1),
-            mo.md("❌ No cached solution found")
-        ], gap=0.3)
+        _status = "❌ No solution found"
+        _df_sol = pd.DataFrame({"Status": ["No solution"]})
+        _df_inv = pd.DataFrame()
+
+    # Create slide
+    sensitivitySlide = sc.create_slide("Sensitivity: Capacity", layout_type="1-column")
+
+    sensitivitySlide.content1 = mo.vstack([
+        mo.hstack([mo.md("**Vary Capacity $Cap_t$:**"), capacity_slider], justify="start", gap=1),
+        mo.md(f"**Result:** {_status}"),
+        mo.hstack([
+            mo.vstack([mo.md("**Production Plan:**"), mo.ui.table(_df_sol, selection=None)]),
+            mo.vstack([mo.md("**Inventory:**"), mo.ui.table(_df_inv, selection=None)])
+        ], gap=1)
+    ], gap=0.3)
 
     sensitivitySlide.render()
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     # Slider for penalty cost sensitivity
-    penalty_slider = mo.ui.slider(1.0, 20.0, value=5.0, step=0.5, label="Penalty Cost (€/unit/mo)", show_value=True)
+    penalty_slider = mo.ui.slider(1.0, 20.0, value=5.0, step=0.5, label="Penalty Cost ($/unit/mo)", show_value=True)
     return (penalty_slider,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     df_demand,
     df_usage,
-    make_split_chart,
     mo,
     months_list,
     pd,
     penalty_slider,
-    production_cache,
     products_list,
+    pulp,
     sc,
+    solve_with_scipy,
 ):
-    # Load solution from cache (instant!) instead of solving
+    # Re-solve with varied penalty cost
     _penalty_val = penalty_slider.value
-    _cached = production_cache["penalty"].get(str(_penalty_val)) if production_cache else None
 
-    if _cached and _cached.get("status") == "optimal":
-        _total_cost = _cached["total_cost"]
-        _total_backorders = _cached["total_backorders"]
-        _total_holding = _cached["total_holding"]
-        _status = f"✅ Cost: **€{_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
+    _holding_cost = {_p: 0.5 for _p in products_list}
+    _penalty_cost = {_p: _penalty_val for _p in products_list}
+    _batch_sizes = df_usage["Batch Size"].to_dict()
+    _run_time = {_p: df_usage.loc[_p, "Hours/Unit"] * df_usage.loc[_p, "Batch Size"] for _p in products_list}
+    _setup_times = df_usage["Setup Hours"].to_dict()
+    _M = {_p: 20 for _p in products_list}
+    _I_0 = {_p: 200 for _p in products_list}
+    _capacity = 1500
 
-        _viz_rows = []
-        for _p in products_list:
-            _batch_size = df_usage.loc[_p, "Batch Size"]
-            for _t in months_list:
-                _batches = _cached["solution"][_p][_t]
-                _production = _batches * _batch_size
-                _demand = df_demand.loc[_p, _t]
-                _inventory = _cached["inventory"][_p][_t]
-                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
-        _viz_df = pd.DataFrame(_viz_rows)
-        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
+    _model = pulp.LpProblem("Sens_Penalty", pulp.LpMinimize)
+    _y = pulp.LpVariable.dicts("y", (products_list, months_list), lowBound=0, cat='Integer')
+    _z = pulp.LpVariable.dicts("z", (products_list, months_list), cat='Binary')
+    _Ip = pulp.LpVariable.dicts("Ip", (products_list, months_list), lowBound=0)
+    _Im = pulp.LpVariable.dicts("Im", (products_list, months_list), lowBound=0)
 
-        _products_left = products_list[:4]
-        _products_right = products_list[4:]
+    _model += pulp.lpSum(_holding_cost[_p] * _Ip[_p][_t] + _penalty_cost[_p] * _Im[_p][_t] for _p in products_list for _t in months_list)
 
-        _legend_str = mo.md(
-            """
-            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
-            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
-            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
-            <span style='color:#ef4444'><b>-- Backorders</b></span>
-            """
-        )
+    for _p in products_list:
+        for _t_idx, _t in enumerate(months_list):
+            _prev_inv = _I_0[_p] if _t_idx == 0 else (_Ip[_p][months_list[_t_idx-1]] - _Im[_p][months_list[_t_idx-1]])
+            _model += _Ip[_p][_t] - _Im[_p][_t] == _prev_inv + _batch_sizes[_p] * _y[_p][_t] - df_demand.loc[_p, _t]
+            _model += _y[_p][_t] <= _M[_p] * _z[_p][_t]
 
-        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
-        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
+    for _t in months_list:
+        _model += pulp.lpSum(_run_time[_p] * _y[_p][_t] + _setup_times[_p] * _z[_p][_t] for _p in products_list) <= _capacity
 
-        penSlide = sc.create_slide("Sensitivity: Penalty Cost", layout_type="2-column")
-        # Left: Slider + Chart
-        penSlide.content1 = mo.vstack([
-            mo.hstack([mo.md("**Vary Penalty $p_i$:**"), penalty_slider], justify="start", gap=1),
-            mo.md("&nbsp;"),
-            mo.ui.altair_chart(_chart_left)
-        ], gap=0.3)
-        # Right: Status + Legend + Chart
-        penSlide.content2 = mo.vstack([
-            mo.md(f"**Result:** {_status}"),
-            _legend_str,
-            mo.ui.altair_chart(_chart_right)
-        ], gap=0.3)
+    solve_with_scipy(_model)
+
+    if _model.status == pulp.LpStatusOptimal:
+        _total_cost = pulp.value(_model.objective)
+        _total_backorders = sum(_Im[_p][_t].varValue or 0 for _p in products_list for _t in months_list)
+        _status = f"✅ Cost: **${_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}**"
+        _sol_data = [{"Product": _p[:12], **{f"y_{_t}": int(_y[_p][_t].varValue or 0) for _t in months_list}} for _p in products_list]
+        _inv_data = [{"Product": _p[:12], **{f"I_{_t}": int((_Ip[_p][_t].varValue or 0) - (_Im[_p][_t].varValue or 0)) for _t in months_list}} for _p in products_list]
+        _df_sol = pd.DataFrame(_sol_data)
+        _df_inv = pd.DataFrame(_inv_data)
     else:
-        penSlide = sc.create_slide("Sensitivity: Penalty Cost", layout_type="1-column")
-        penSlide.content1 = mo.vstack([
-            mo.hstack([mo.md("**Vary Penalty $p_i$:**"), penalty_slider], justify="start", gap=1),
-            mo.md("❌ No cached solution found")
-        ], gap=0.3)
+        _status = "❌ No solution"
+        _df_sol = pd.DataFrame({"Status": ["No solution"]})
+        _df_inv = pd.DataFrame()
 
+    penSlide = sc.create_slide("Sensitivity: Penalty Cost", layout_type="1-column")
+    penSlide.content1 = mo.vstack([
+        mo.hstack([mo.md("**Vary Penalty $p_i$:**"), penalty_slider], justify="start", gap=1),
+        mo.md(f"**Result:** {_status}"),
+        mo.hstack([
+            mo.vstack([mo.md("**Production Plan:**"), mo.ui.table(_df_sol, selection=None)]),
+            mo.vstack([mo.md("**Inventory:**"), mo.ui.table(_df_inv, selection=None)])
+        ], gap=1)
+    ], gap=0.3)
     penSlide.render()
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     # Slider for holding cost sensitivity
-    holding_slider = mo.ui.slider(0.1, 5.0, value=0.5, step=0.1, label="Holding Cost (€/unit/mo)", show_value=True)
+    holding_slider = mo.ui.slider(0.1, 5.0, value=0.5, step=0.1, label="Holding Cost ($/unit/mo)", show_value=True)
     return (holding_slider,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     df_demand,
     df_usage,
     holding_slider,
-    make_split_chart,
     mo,
     months_list,
     pd,
-    production_cache,
     products_list,
+    pulp,
     sc,
+    solve_with_scipy,
 ):
+    # Re-solve with varied holding cost
     _holding_val = holding_slider.value
-    _cached = production_cache["holding"].get(str(_holding_val)) if production_cache else None
 
-    if _cached and _cached.get("status") == "optimal":
-        _total_cost = _cached["total_cost"]
-        _total_backorders = _cached["total_backorders"]
-        _total_holding = _cached["total_holding"]
-        _status = f"✅ Cost: **€{_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
+    _holding_cost = {_p: _holding_val for _p in products_list}
+    _penalty_cost = {_p: 5.0 for _p in products_list}
+    _batch_sizes = df_usage["Batch Size"].to_dict()
+    _run_time = {_p: df_usage.loc[_p, "Hours/Unit"] * df_usage.loc[_p, "Batch Size"] for _p in products_list}
+    _setup_times = df_usage["Setup Hours"].to_dict()
+    _M = {_p: 20 for _p in products_list}
+    _I_0 = {_p: 200 for _p in products_list}
+    _capacity = 1500
 
-        _viz_rows = []
-        for _p in products_list:
-            _batch_size = df_usage.loc[_p, "Batch Size"]
-            for _t in months_list:
-                _batches = _cached["solution"][_p][_t]
-                _production = _batches * _batch_size
-                _demand = df_demand.loc[_p, _t]
-                _inventory = _cached["inventory"][_p][_t]
-                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
-        _viz_df = pd.DataFrame(_viz_rows)
-        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
+    _model = pulp.LpProblem("Sens_Holding", pulp.LpMinimize)
+    _y = pulp.LpVariable.dicts("y", (products_list, months_list), lowBound=0, cat='Integer')
+    _z = pulp.LpVariable.dicts("z", (products_list, months_list), cat='Binary')
+    _Ip = pulp.LpVariable.dicts("Ip", (products_list, months_list), lowBound=0)
+    _Im = pulp.LpVariable.dicts("Im", (products_list, months_list), lowBound=0)
 
-        _products_left = products_list[:4]
-        _products_right = products_list[4:]
+    _model += pulp.lpSum(_holding_cost[_p] * _Ip[_p][_t] + _penalty_cost[_p] * _Im[_p][_t] for _p in products_list for _t in months_list)
 
-        _legend_str = mo.md(
-            """
-            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
-            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
-            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
-            <span style='color:#ef4444'><b>-- Backorders</b></span>
-            """
-        )
+    for _p in products_list:
+        for _t_idx, _t in enumerate(months_list):
+            _prev_inv = _I_0[_p] if _t_idx == 0 else (_Ip[_p][months_list[_t_idx-1]] - _Im[_p][months_list[_t_idx-1]])
+            _model += _Ip[_p][_t] - _Im[_p][_t] == _prev_inv + _batch_sizes[_p] * _y[_p][_t] - df_demand.loc[_p, _t]
+            _model += _y[_p][_t] <= _M[_p] * _z[_p][_t]
 
-        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
-        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
+    for _t in months_list:
+        _model += pulp.lpSum(_run_time[_p] * _y[_p][_t] + _setup_times[_p] * _z[_p][_t] for _p in products_list) <= _capacity
 
-        holdSlide = sc.create_slide("Sensitivity: Holding Cost", layout_type="2-column")
-        # Left: Slider + Chart
-        holdSlide.content1 = mo.vstack([
-            mo.hstack([mo.md("**Vary Holding $h_i$:**"), holding_slider], justify="start", gap=1),
-            mo.md("&nbsp;"),
-            mo.ui.altair_chart(_chart_left)
-        ], gap=0.3)
-        # Right: Status + Legend + Chart
-        holdSlide.content2 = mo.vstack([
-            mo.md(f"**Result:** {_status}"),
-            _legend_str,
-            mo.ui.altair_chart(_chart_right)
-        ], gap=0.3)
+    solve_with_scipy(_model)
+
+    if _model.status == pulp.LpStatusOptimal:
+        _total_cost = pulp.value(_model.objective)
+        _total_holding = sum(_Ip[_p][_t].varValue or 0 for _p in products_list for _t in months_list)
+        _status = f"✅ Cost: **${_total_cost:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
+        _sol_data = [{"Product": _p[:12], **{f"y_{_t}": int(_y[_p][_t].varValue or 0) for _t in months_list}} for _p in products_list]
+        _inv_data = [{"Product": _p[:12], **{f"I_{_t}": int((_Ip[_p][_t].varValue or 0) - (_Im[_p][_t].varValue or 0)) for _t in months_list}} for _p in products_list]
+        _df_sol = pd.DataFrame(_sol_data)
+        _df_inv = pd.DataFrame(_inv_data)
     else:
-        holdSlide = sc.create_slide("Sensitivity: Holding Cost", layout_type="1-column")
-        holdSlide.content1 = mo.vstack([mo.hstack([mo.md("**Vary Holding $h_i$:**"), holding_slider], justify="start", gap=1), mo.md("❌ No cached solution found")], gap=0.3)
+        _status = "❌ No solution"
+        _df_sol = pd.DataFrame({"Status": ["No solution"]})
+        _df_inv = pd.DataFrame()
 
+    holdSlide = sc.create_slide("Sensitivity: Holding Cost", layout_type="1-column")
+    holdSlide.content1 = mo.vstack([
+        mo.hstack([mo.md("**Vary Holding $h_i$:**"), holding_slider], justify="start", gap=1),
+        mo.md(f"**Result:** {_status}"),
+        mo.hstack([
+            mo.vstack([mo.md("**Production Plan:**"), mo.ui.table(_df_sol, selection=None)]),
+            mo.vstack([mo.md("**Inventory:**"), mo.ui.table(_df_inv, selection=None)])
+        ], gap=1)
+    ], gap=0.3)
     holdSlide.render()
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     # Slider for initial inventory sensitivity
     init_inv_slider = mo.ui.slider(0, 500, value=200, step=50, label="Initial Inventory (units)", show_value=True)
     return (init_inv_slider,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     df_demand,
     df_usage,
     init_inv_slider,
-    make_split_chart,
     mo,
     months_list,
     pd,
-    production_cache,
     products_list,
+    pulp,
     sc,
+    solve_with_scipy,
 ):
+    # Re-solve with varied initial inventory
     _init_val = init_inv_slider.value
-    _cached = production_cache["init_inv"].get(str(_init_val)) if production_cache else None
 
-    if _cached and _cached.get("status") == "optimal":
-        _total_cost = _cached["total_cost"]
-        _total_backorders = _cached["total_backorders"]
-        _total_holding = _cached["total_holding"]
-        _status = f"✅ Cost: **€{_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
+    _holding_cost = {_p: 0.5 for _p in products_list}
+    _penalty_cost = {_p: 5.0 for _p in products_list}
+    _batch_sizes = df_usage["Batch Size"].to_dict()
+    _run_time = {_p: df_usage.loc[_p, "Hours/Unit"] * df_usage.loc[_p, "Batch Size"] for _p in products_list}
+    _setup_times = df_usage["Setup Hours"].to_dict()
+    _M = {_p: 20 for _p in products_list}
+    _I_0 = {_p: _init_val for _p in products_list}
+    _capacity = 1500
 
-        _viz_rows = []
-        for _p in products_list:
-            _batch_size = df_usage.loc[_p, "Batch Size"]
-            for _t in months_list:
-                _batches = _cached["solution"][_p][_t]
-                _production = _batches * _batch_size
-                _demand = df_demand.loc[_p, _t]
-                _inventory = _cached["inventory"][_p][_t]
-                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
-        _viz_df = pd.DataFrame(_viz_rows)
-        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
+    _model = pulp.LpProblem("Sens_InitInv", pulp.LpMinimize)
+    _y = pulp.LpVariable.dicts("y", (products_list, months_list), lowBound=0, cat='Integer')
+    _z = pulp.LpVariable.dicts("z", (products_list, months_list), cat='Binary')
+    _Ip = pulp.LpVariable.dicts("Ip", (products_list, months_list), lowBound=0)
+    _Im = pulp.LpVariable.dicts("Im", (products_list, months_list), lowBound=0)
 
-        _products_left = products_list[:4]
-        _products_right = products_list[4:]
+    _model += pulp.lpSum(_holding_cost[_p] * _Ip[_p][_t] + _penalty_cost[_p] * _Im[_p][_t] for _p in products_list for _t in months_list)
 
-        _legend_str = mo.md(
-            """
-            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
-            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
-            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
-            <span style='color:#ef4444'><b>-- Backorders</b></span>
-            """
-        )
+    for _p in products_list:
+        for _t_idx, _t in enumerate(months_list):
+            _prev_inv = _I_0[_p] if _t_idx == 0 else (_Ip[_p][months_list[_t_idx-1]] - _Im[_p][months_list[_t_idx-1]])
+            _model += _Ip[_p][_t] - _Im[_p][_t] == _prev_inv + _batch_sizes[_p] * _y[_p][_t] - df_demand.loc[_p, _t]
+            _model += _y[_p][_t] <= _M[_p] * _z[_p][_t]
 
-        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
-        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
+    for _t in months_list:
+        _model += pulp.lpSum(_run_time[_p] * _y[_p][_t] + _setup_times[_p] * _z[_p][_t] for _p in products_list) <= _capacity
 
-        initSlide = sc.create_slide("Sensitivity: Initial Inventory", layout_type="2-column")
-        # Left: Slider + Chart
-        initSlide.content1 = mo.vstack([
-            mo.hstack([mo.md("**Vary Initial Inv. $I_{i0}$:**"), init_inv_slider], justify="start", gap=1),
-            mo.md("&nbsp;"),
-            mo.ui.altair_chart(_chart_left)
-        ], gap=0.3)
-        # Right: Status + Legend + Chart
-        initSlide.content2 = mo.vstack([
-            mo.md(f"**Result:** {_status}"),
-            _legend_str,
-            mo.ui.altair_chart(_chart_right)
-        ], gap=0.3)
+    solve_with_scipy(_model)
+
+    if _model.status == pulp.LpStatusOptimal:
+        _total_cost = pulp.value(_model.objective)
+        _total_backorders = sum(_Im[_p][_t].varValue or 0 for _p in products_list for _t in months_list)
+        _status = f"✅ Cost: **${_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}**"
+        _sol_data = [{"Product": _p[:12], **{f"y_{_t}": int(_y[_p][_t].varValue or 0) for _t in months_list}} for _p in products_list]
+        _inv_data = [{"Product": _p[:12], **{f"I_{_t}": int((_Ip[_p][_t].varValue or 0) - (_Im[_p][_t].varValue or 0)) for _t in months_list}} for _p in products_list]
+        _df_sol = pd.DataFrame(_sol_data)
+        _df_inv = pd.DataFrame(_inv_data)
     else:
-        initSlide = sc.create_slide("Sensitivity: Initial Inventory", layout_type="1-column")
-        initSlide.content1 = mo.vstack([mo.hstack([mo.md("**Vary Initial Inv. $I_{i0}$:**"), init_inv_slider], justify="start", gap=1), mo.md("❌ No cached solution found")], gap=0.3)
+        _status = "❌ No solution"
+        _df_sol = pd.DataFrame({"Status": ["No solution"]})
+        _df_inv = pd.DataFrame()
 
+    initSlide = sc.create_slide("Sensitivity: Initial Inventory", layout_type="1-column")
+    initSlide.content1 = mo.vstack([
+        mo.hstack([mo.md("**Vary Initial Inv. $I_{i0}$:**"), init_inv_slider], justify="start", gap=1),
+        mo.md(f"**Result:** {_status}"),
+        mo.hstack([
+            mo.vstack([mo.md("**Production Plan:**"), mo.ui.table(_df_sol, selection=None)]),
+            mo.vstack([mo.md("**Inventory:**"), mo.ui.table(_df_inv, selection=None)])
+        ], gap=1)
+    ], gap=0.3)
     initSlide.render()
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    # Controls for Interaction Slide - using sliders with cached value steps
-    int_cap = mo.ui.slider(
-        start=1500, stop=2400, value=1800, step=300,
-        label="Capacity (hrs/mo)", show_value=True
-    )
-    # Penalty uses discrete values: 2, 4, ..., 20 (step 2)
-    int_pen = mo.ui.slider(
-        start=2, stop=20, value=6, step=2,
-        label="Penalty (€/unit)", show_value=True
-    )
-    int_hold = mo.ui.slider(
-        start=0.5, stop=2.0, value=0.5, step=0.5,
-        label="Holding (€/unit)", show_value=True
-    )
-    return int_cap, int_hold, int_pen
-
-
-@app.cell(hide_code=True)
-def _(
-    df_demand,
-    df_usage,
-    int_cap,
-    int_hold,
-    int_pen,
-    make_split_chart,
-    mo,
-    pd,
-    production_cache,
-    products_list,
-    sc,
-):
-    # Lookup key in interaction cache - format slider values to match cache keys
-    _key = f"{int(int_cap.value)}_{float(int_pen.value)}_{round(float(int_hold.value), 1)}"
-
-    # Try to find solution
-    _res = production_cache.get("interaction", {}).get(_key)
-
-    if _res:
-        _total_cost = _res["total_cost"]
-        _total_backorders = _res["total_backorders"]
-        _total_holding = _res["total_holding"]
-        _status = f"✅ Cost: **€{_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
-
-        _viz_rows = []
-        _months_iter = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
-
-        for _p in products_list:
-            _sol_dict = _res["solution"][_p]
-            _inv_dict = _res["inventory"][_p]
-            _demand_vals = df_demand.loc[_p].values
-            _batch_size = df_usage.loc[_p, "Batch Size"]
-
-            for _t_idx, _m_name in enumerate(_months_iter):
-                _batches = _sol_dict.get(_m_name, 0)
-                _inv_level = _inv_dict.get(_m_name, 0)
-                _prod_val = _batches * _batch_size
-                _dem_val = _demand_vals[_t_idx] if _t_idx < len(_demand_vals) else 0
-                _on_hand = max(0, _inv_level)
-                _backorders = max(0, -_inv_level)
-
-                _viz_rows.append({
-                    "Product": _p, "Month": _m_name,
-                    "Production": _prod_val, "Demand": _dem_val,
-                    "On-Hand": _on_hand, "Backorders": _backorders
-                })
-
-        _viz_df = pd.DataFrame(_viz_rows)
-        _viz_long = _viz_df.melt(
-            id_vars=["Product", "Month"],
-            value_vars=["Production", "Demand", "On-Hand", "Backorders"],
-            var_name="Metric", value_name="Units"
-        )
-
-        # Split products into left (first 4) and right (last 4)
-        _products_left = products_list[:4]
-        _products_right = products_list[4:]
-
-        _legend_str = mo.md(
-            """
-            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
-            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
-            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
-            <span style='color:#ef4444'><b>-- Backorders</b></span>
-            """
-        )
-
-        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
-        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
-
-        interactionSlide = sc.create_slide("Sensitivity: Multi-Parameter Interaction", layout_type="2-column")
-        # Left: Sliders + Chart (3 lines of content above chart)
-        interactionSlide.content1 = mo.vstack([
-            mo.hstack([mo.md("**Vary Parameters:**"), int_cap], justify="start", gap=1),
-            mo.hstack([int_pen, int_hold], justify="start", gap=1),
-            mo.md("&nbsp;"), # Spacer to balance height with Result on right
-            mo.ui.altair_chart(_chart_left)
-        ], gap=0.1)
-        # Right: Legend + Result + Spacer + Chart (3 lines of content above chart for alignment)
-        interactionSlide.content2 = mo.vstack([
-            _legend_str,
-            mo.md(f"**Result:** {_status}"),
-            mo.md("&nbsp;"),
-            mo.ui.altair_chart(_chart_right) # Removed one spacer to keep total lines at 3 before chart
-        ], gap=1.1)
-    else:
-        interactionSlide = sc.create_slide("Sensitivity: Multi-Parameter Interaction", layout_type="1-column")
-        interactionSlide.content1 = mo.vstack([
-            mo.hstack([mo.md("**Vary Parameters:**"), int_cap, int_pen, int_hold], justify="start", gap=1),
-            mo.callout(mo.md(f"⚠️ **Simulation not found for this combination.**\n\nKey: `{_key}`"), kind="warn")
-        ], gap=0.3)
-
-    interactionSlide.render()
-    return
-
-
-@app.cell
-def _():
     return
 
 
