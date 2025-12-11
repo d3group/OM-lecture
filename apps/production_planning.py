@@ -26,11 +26,16 @@ def _():
 
 @app.cell(hide_code=True)
 def _(np, pulp):
-    # PuLP to SciPy solver shim for WASM compatibility
+    # PuLP to SciPy solver for WASM compatibility
+    # PuLP's CBC solver uses subprocess which doesn't work in WASM,
+    # so we convert the PuLP model to scipy format and solve with HiGHS
     from scipy.sparse import coo_matrix
     from scipy.optimize import linprog
 
     def pulp_to_scipy_linprog(prob):
+        """
+        Convert a PuLP LP (prob) into the data structures expected by scipy.optimize.linprog.
+        """
         variables = [v for v in prob.variables() if v.name != "__dummy"]
         n_vars = len(variables)
         var_index = {v: i for i, v in enumerate(variables)}
@@ -103,6 +108,10 @@ def _(np, pulp):
         }
 
     def solve_with_scipy(prob):
+        """
+        Solve a PuLP problem using SciPy's linprog with HiGHS solver.
+        Works in WASM where PuLP's CBC solver fails due to subprocess restrictions.
+        """
         data = pulp_to_scipy_linprog(prob)
         result = linprog(
             c=data['c'], A_ub=data['A_ub'], b_ub=data['b_ub'],
@@ -939,7 +948,7 @@ def _(
     init_inv = 200  # Same for all products
     _I_0 = {_p: init_inv for _p in products_list}
 
-    # Create model
+    # Create model using PuLP
     _model = pulp.LpProblem("ProductionPlanning", pulp.LpMinimize)
 
     # Decision variables
@@ -969,7 +978,7 @@ def _(
             for _p in products_list
         ) <= capacity_val, f"Cap_{_t}"
 
-    # Solve
+    # Solve using scipy (works in WASM)
     solve_with_scipy(_model)
 
     # Extract solution
