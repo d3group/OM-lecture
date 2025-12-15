@@ -33,7 +33,7 @@ df_usage = pd.DataFrame({
 }, index=products_list)
 
 
-def solve_production_planning(capacity=1500, penalty=5.0, holding=0.5, init_inv=200):
+def solve_production_planning(capacity=1800, penalty=5.0, holding=0.5, init_inv=200):
     """Solve the production planning model with given parameters using PuLP + CBC."""
     _batch_sizes = df_usage["Batch Size"].to_dict()
     _run_time = {p: df_usage.loc[p, "Hours/Unit"] * df_usage.loc[p, "Batch Size"] for p in products_list}
@@ -69,8 +69,8 @@ def solve_production_planning(capacity=1500, penalty=5.0, holding=0.5, init_inv=
             for p in products_list
         ) <= capacity
 
-    # Use CBC solver with time limit
-    model.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=120))
+    # Use CBC solver with consistent 10s limit and default tolerance for smooth curves
+    model.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=10))
 
     if model.status == pulp.LpStatusOptimal:
         result = {
@@ -89,54 +89,92 @@ def solve_production_planning(capacity=1500, penalty=5.0, holding=0.5, init_inv=
         return {"status": "infeasible"}
 
 
+
+def solve_wrapper(kwargs):
+    """Helper for parallel execution."""
+    return solve_production_planning(**kwargs)
+
 def generate_cache():
-    """Generate all cached solutions."""
+    """Generate all cached solutions using parallel processing."""
     import time
+    from concurrent.futures import ProcessPoolExecutor
     
     print("Generating base solution...", flush=True)
     start = time.time()
+    
+    # Define all tasks
+    tasks = []
+    
+    # Base
+    tasks.append(("base", None, {}))
+    
+    # Capacity: 800-2500, step=100
+    for cap in range(800, 2501, 100):
+        tasks.append(("capacity", str(cap), {"capacity": cap}))
+        
+    # Penalty: 1.0-20.0, step=0.5
+    for i in range(10, 201, 5):
+        pen = i / 10.0
+        tasks.append(("penalty", str(pen), {"penalty": pen}))
+        
+    # Holding: 0.1-5.0, step=0.1
+    for i in range(1, 51):
+        hold = i / 10.0
+        tasks.append(("holding", str(hold), {"holding": hold}))
+        
+    # Init Inv: 0-500, step=50
+    for inv in range(0, 501, 50):
+        tasks.append(("init_inv", str(inv), {"init_inv": inv}))
+        
+    # Interaction Grid: Cap x Pen x Hold (all slider values)
+    # Cap: 1500-2400 step 300 => [1500, 1800, 2100, 2400]
+    # Pen: 1-20 step 1 => [1, 2, 3, ..., 20]
+    # Hold: 0.1-2.0 step 0.1 => [0.1, 0.2, 0.3, ..., 2.0]
+    interaction_caps = [1500, 1800, 2100, 2400]
+    interaction_pens = [float(i) for i in range(1, 21)]  # 1.0 to 20.0 in steps of 1
+    interaction_holds = [round(i / 10, 1) for i in range(1, 21)]  # 0.1 to 2.0 in steps of 0.1
+    
+    for c in interaction_caps:
+        for p in interaction_pens:
+            for h in interaction_holds:
+                key = f"{c}_{p}_{h}"
+                tasks.append(("interaction", key, {"capacity": c, "penalty": p, "holding": h}))
+
+    print(f"Starting parallel generation of {len(tasks)} scenarios...", flush=True)
+    
     cache = {
-        "base": solve_production_planning(),  # Default parameters
+        "base": None,
         "capacity": {},
         "penalty": {},
         "holding": {},
-        "init_inv": {}
+        "init_inv": {},
+        "interaction": {}
     }
-    print(f"  Base: done ({time.time() - start:.1f}s)", flush=True)
+    
+    with ProcessPoolExecutor(max_workers=8) as executor:
+        # Submit all tasks
+        futures = {executor.submit(solve_wrapper, params): (cat, key) for cat, key, params in tasks}
+        
+        # Collect results
+        completed = 0
+        for future in futures:
+            cat, key = futures[future]
+            try:
+                result = future.result()
+                if cat == "base":
+                    cache["base"] = result
+                else:
+                    cache[cat][key] = result
+            except Exception as e:
+                print(f"Error in {cat} {key}: {e}")
+            
+            completed += 1
+            if completed % 10 == 0:
+                print(f"  Progress: {completed}/{len(tasks)} done ({time.time() - start:.1f}s)", flush=True)
 
-    # Capacity sensitivity: 800-2500, step=100
-    cap_values = list(range(800, 2501, 100))
-    print(f"Computing capacity sensitivity ({len(cap_values)} values)...", flush=True)
-    for i, cap in enumerate(cap_values):
-        start = time.time()
-        cache["capacity"][str(cap)] = solve_production_planning(capacity=cap)
-        print(f"  [{i+1}/{len(cap_values)}] Capacity {cap}: done ({time.time() - start:.1f}s)", flush=True)
-
-    # Penalty cost sensitivity: 1.0-20.0, step=0.5
-    pen_values = [x/10.0 for x in range(10, 201, 5)]
-    print(f"Computing penalty sensitivity ({len(pen_values)} values)...", flush=True)
-    for i, pen in enumerate(pen_values):
-        start = time.time()
-        cache["penalty"][str(pen)] = solve_production_planning(penalty=pen)
-        print(f"  [{i+1}/{len(pen_values)}] Penalty {pen}: done ({time.time() - start:.1f}s)", flush=True)
-
-    # Holding cost sensitivity: 0.1-5.0, step=0.1
-    hold_values = [x/10.0 for x in range(1, 51)]
-    print(f"Computing holding sensitivity ({len(hold_values)} values)...", flush=True)
-    for i, hold in enumerate(hold_values):
-        start = time.time()
-        cache["holding"][str(hold)] = solve_production_planning(holding=hold)
-        print(f"  [{i+1}/{len(hold_values)}] Holding {hold}: done ({time.time() - start:.1f}s)", flush=True)
-
-    # Initial inventory sensitivity: 0-500, step=50
-    inv_values = list(range(0, 501, 50))
-    print(f"Computing init_inv sensitivity ({len(inv_values)} values)...", flush=True)
-    for i, inv in enumerate(inv_values):
-        start = time.time()
-        cache["init_inv"][str(inv)] = solve_production_planning(init_inv=inv)
-        print(f"  [{i+1}/{len(inv_values)}] Init Inv {inv}: done ({time.time() - start:.1f}s)", flush=True)
-
+    print(f"All done ({time.time() - start:.1f}s)", flush=True)
     return cache
+
 
 
 if __name__ == "__main__":
