@@ -1,9 +1,10 @@
 import marimo
 
-__generated_with = "0.18.1"
+__generated_with = "0.18.0"
 app = marimo.App(
     width="medium",
     app_title="Production Planning and Scheduling",
+    layout_file="layouts/production_planning.slides.json",
     css_file="d3.css",
 )
 
@@ -22,7 +23,7 @@ def _():
     from dataclasses import dataclass
     from typing import Optional, Iterable
     import html
-    return Optional, base64, dataclass, html, json, mo, np, pd, pulp
+    return Optional, alt, base64, dataclass, html, json, mo, np, pd, pulp
 
 
 @app.cell(hide_code=True)
@@ -718,6 +719,7 @@ def _(df_demand, df_usage, mo, products_list):
 
 @app.cell(hide_code=True)
 def _(
+    alt,
     batch_size,
     df_demand,
     mo,
@@ -763,29 +765,53 @@ def _(
     total_backorders = int(df["Backorders"].sum())
     total_holding = int(df["On-Hand"].sum())
 
-    # Slide - simple 1-column
-    interactiveSlide = sc.create_slide("Interactive", layout_type="1-column")
+    # Simple stacked bar chart - melt data for Altair
+    _chart_df = df[["Month", "On-Hand", "Backorders"]].melt(
+        id_vars=["Month"], 
+        var_name="Type", 
+        value_name="Units"
+    )
+
+    _chart = alt.Chart(_chart_df).mark_bar().encode(
+        x=alt.X("Month:N", sort=months_list, title="Month"),
+        y=alt.Y("Units:Q", title="Units"),
+        color=alt.Color("Type:N", 
+            scale=alt.Scale(domain=["On-Hand", "Backorders"], range=["#22c55e", "#ef4444"]),
+            legend=alt.Legend(title="Status", orient="top")
+        ),
+        xOffset="Type:N",
+        tooltip=["Month", "Type", "Units"]
+    ).properties(width=400, height=220)
+
+    # Slide with 2-row layout
+    interactiveSlide = sc.create_slide("Interactive: Single-Product MPS", layout_type="2-row")
 
     interactiveSlide.content1 = mo.vstack([
-        mo.md(f'''
-
-
-    **Product:** {product_name} | **Batch Size $b_i$:** {_b_i} | **Initial Inventory $I_0$:** {_I_0}
-        '''),
+        mo.md(f'''**Product:** {product_name} | **Batch Size:** {_b_i} units | **Initial Inventory:** {_I_0} units'''),
+        mo.md("**Set number of batches per month:**"),
         mo.hstack([
-            mo.vstack([mo.md("**Jan (t=1)**"), slider_jan]),
-            mo.vstack([mo.md("**Feb (t=2)**"), slider_feb]),
-            mo.vstack([mo.md("**Mar (t=3)**"), slider_mar]),
-            mo.vstack([mo.md("**Apr (t=4)**"), slider_apr]),
-            mo.vstack([mo.md("**May (t=5)**"), slider_may]),
-            mo.vstack([mo.md("**Jun (t=6)**"), slider_jun]),
-        ], justify="start", gap=1.5),
-        mo.md(f'''
-    **Summary:** On-Hand = **{total_holding}** | Backorders = **{total_backorders}**
-        '''),
-        mo.ui.table(df[["Month", "Demand", "Batches (y)", "Production", "On-Hand", "Backorders"]], 
-                    selection=None)
-    ], gap=1)
+            mo.vstack([mo.md("**Jan**"), slider_jan], align="center"),
+            mo.vstack([mo.md("**Feb**"), slider_feb], align="center"),
+            mo.vstack([mo.md("**Mar**"), slider_mar], align="center"),
+            mo.vstack([mo.md("**Apr**"), slider_apr], align="center"),
+            mo.vstack([mo.md("**May**"), slider_may], align="center"),
+            mo.vstack([mo.md("**Jun**"), slider_jun], align="center"),
+        ], justify="center", gap=1),
+    ], gap=0.3)
+
+    interactiveSlide.content2 = mo.hstack([
+        mo.ui.altair_chart(_chart),
+        mo.callout(
+            mo.md(f'''
+    **Results:**
+
+    🟢 **On-Hand:** {total_holding:,} units
+
+    🔴 **Backorders:** {total_backorders:,} units
+            '''),
+            kind="info"
+        )
+    ], justify="center", gap=2)
 
     interactiveSlide.render()
     return
@@ -1010,7 +1036,7 @@ def _(
         df_inventory = pd.DataFrame()
         status_msg = "**No cached solution found**"
         total_cost = None
-    return capacity_val, df_inventory, df_solution, init_inv, status_msg
+    return capacity_val, init_inv, status_msg
 
 
 @app.cell(hide_code=True)
@@ -1067,17 +1093,81 @@ def _(df_usage, mo, sc):
 
 
 @app.cell(hide_code=True)
-def _(df_inventory, df_solution, mo, sc, status_msg):
-    # === SLIDE: Optimal Solution ===
-    solutionSlide = sc.create_slide("Optimal Solution", layout_type="1-column")
+def _(
+    alt,
+    df_demand,
+    df_usage,
+    mo,
+    months_list,
+    pd,
+    production_cache,
+    products_list,
+    sc,
+    status_msg,
+):
+    # === SLIDE: Optimal Solution with Faceted Visualization ===
 
-    solutionSlide.content1 = mo.vstack([
-        mo.md(f"{status_msg}"),
-        mo.hstack([
-            mo.vstack([mo.md("**Production Plan (batches $y_{it}$):**"), mo.ui.table(df_solution, selection=None)]),
-            mo.vstack([mo.md("**Inventory ($I_{it}$, neg=backorder):**"), mo.ui.table(df_inventory, selection=None)])
-        ], gap=1)
-    ], gap=0.5)
+    # Build comprehensive data for visualization
+    _cached = production_cache["capacity"].get("1500") if production_cache else None
+
+    if _cached and _cached.get("status") == "optimal":
+        # Build data for all products
+        _viz_rows = []
+        for _p in products_list:
+            _batch_size = df_usage.loc[_p, "Batch Size"]
+            for _t in months_list:
+                _batches = _cached["solution"][_p][_t]
+                _production = _batches * _batch_size
+                _demand = df_demand.loc[_p, _t]
+                _inventory = _cached["inventory"][_p][_t]
+                _viz_rows.append({
+                    "Product": _p[:12], "Month": _t,
+                    "Production": _production, "Demand": _demand,
+                    "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)
+                })
+
+        _viz_df = pd.DataFrame(_viz_rows)
+        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
+
+        # Split products into two groups for side-by-side display
+        _products_left = [p[:12] for p in products_list[:4]]
+        _products_right = [p[:12] for p in products_list[4:]]
+
+        _legend_str = mo.md(
+            """
+            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
+            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
+            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
+            <span style='color:#ef4444'><b>-- Backorders</b></span>
+            """
+        )
+
+        def _make_chart(data, show_legend=False):
+            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
+                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units"),
+                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
+                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
+            )
+            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q"), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
+            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
+
+        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], show_legend=False)
+        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], show_legend=False)
+
+        solutionSlide = sc.create_slide("Optimal Solution", layout_type="2-column")
+        # Left column: Status + Left Chart
+        solutionSlide.content1 = mo.vstack([
+            mo.md(f"{status_msg}"),
+            mo.ui.altair_chart(_chart_left)
+        ], gap=0.5)
+        # Right column: Legend + Right Chart
+        solutionSlide.content2 = mo.vstack([
+            _legend_str,
+            mo.ui.altair_chart(_chart_right)
+        ], gap=0.5)
+    else:
+        solutionSlide = sc.create_slide("Optimal Solution", layout_type="1-column")
+        solutionSlide.content1 = mo.md("**No cached solution found**")
 
     solutionSlide.render()
     return
@@ -1092,7 +1182,10 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(
+    alt,
     capacity_slider,
+    df_demand,
+    df_usage,
     mo,
     months_list,
     pd,
@@ -1110,27 +1203,62 @@ def _(
         _total_holding = _cached["total_holding"]
         _status = f"✅ Cost: **${_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
 
-        # Build solution tables from cache
-        _sol_data = [{"Product": _p[:12], **{f"y_{_t}": _cached["solution"][_p][_t] for _t in months_list}} for _p in products_list]
-        _inv_data = [{"Product": _p[:12], **{f"I_{_t}": _cached["inventory"][_p][_t] for _t in months_list}} for _p in products_list]
-        _df_sol = pd.DataFrame(_sol_data)
-        _df_inv = pd.DataFrame(_inv_data)
+        # Build visualization data
+        _viz_rows = []
+        for _p in products_list:
+            _batch_size = df_usage.loc[_p, "Batch Size"]
+            for _t in months_list:
+                _batches = _cached["solution"][_p][_t]
+                _production = _batches * _batch_size
+                _demand = df_demand.loc[_p, _t]
+                _inventory = _cached["inventory"][_p][_t]
+                _viz_rows.append({"Product": _p[:12], "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
+        _viz_df = pd.DataFrame(_viz_rows)
+        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
+
+        _products_left = [p[:12] for p in products_list[:4]]
+        _products_right = [p[:12] for p in products_list[4:]]
+
+        _legend_str = mo.md(
+            """
+            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
+            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
+            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
+            <span style='color:#ef4444'><b>-- Backorders</b></span>
+            """
+        )
+
+        def _make_chart(data, show_legend=False):
+            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
+                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units"),
+                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
+                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
+            )
+            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q"), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
+            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
+
+        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], False)
+        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], False)
+
+        sensitivitySlide = sc.create_slide("Sensitivity: Capacity", layout_type="2-column")
+        # Left: Slider + Chart
+        sensitivitySlide.content1 = mo.vstack([
+            mo.hstack([mo.md("**Vary Capacity $Cap_t$:**"), capacity_slider], justify="start", gap=1),
+            mo.md("&nbsp;"),
+            mo.ui.altair_chart(_chart_left)
+        ], gap=0.3)
+        # Right: Status + Legend + Chart
+        sensitivitySlide.content2 = mo.vstack([
+            mo.md(f"**Result:** {_status}"),
+            _legend_str,
+            mo.ui.altair_chart(_chart_right)
+        ], gap=0.3)
     else:
-        _status = "❌ No cached solution found"
-        _df_sol = pd.DataFrame({"Status": ["No solution"]})
-        _df_inv = pd.DataFrame()
-
-    # Create slide
-    sensitivitySlide = sc.create_slide("Sensitivity: Capacity", layout_type="1-column")
-
-    sensitivitySlide.content1 = mo.vstack([
-        mo.hstack([mo.md("**Vary Capacity $Cap_t$:**"), capacity_slider], justify="start", gap=1),
-        mo.md(f"**Result:** {_status}"),
-        mo.hstack([
-            mo.vstack([mo.md("**Production Plan:**"), mo.ui.table(_df_sol, selection=None)]),
-            mo.vstack([mo.md("**Inventory:**"), mo.ui.table(_df_inv, selection=None)])
-        ], gap=1)
-    ], gap=0.3)
+        sensitivitySlide = sc.create_slide("Sensitivity: Capacity", layout_type="1-column")
+        sensitivitySlide.content1 = mo.vstack([
+            mo.hstack([mo.md("**Vary Capacity $Cap_t$:**"), capacity_slider], justify="start", gap=1),
+            mo.md("❌ No cached solution found")
+        ], gap=0.3)
 
     sensitivitySlide.render()
     return
@@ -1145,6 +1273,9 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(
+    alt,
+    df_demand,
+    df_usage,
     mo,
     months_list,
     pd,
@@ -1162,24 +1293,63 @@ def _(
         _total_backorders = _cached["total_backorders"]
         _total_holding = _cached["total_holding"]
         _status = f"✅ Cost: **${_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
-        _sol_data = [{"Product": _p[:12], **{f"y_{_t}": _cached["solution"][_p][_t] for _t in months_list}} for _p in products_list]
-        _inv_data = [{"Product": _p[:12], **{f"I_{_t}": _cached["inventory"][_p][_t] for _t in months_list}} for _p in products_list]
-        _df_sol = pd.DataFrame(_sol_data)
-        _df_inv = pd.DataFrame(_inv_data)
-    else:
-        _status = "❌ No cached solution found"
-        _df_sol = pd.DataFrame({"Status": ["No solution"]})
-        _df_inv = pd.DataFrame()
 
-    penSlide = sc.create_slide("Sensitivity: Penalty Cost", layout_type="1-column")
-    penSlide.content1 = mo.vstack([
-        mo.hstack([mo.md("**Vary Penalty $p_i$:**"), penalty_slider], justify="start", gap=1),
-        mo.md(f"**Result:** {_status}"),
-        mo.hstack([
-            mo.vstack([mo.md("**Production Plan:**"), mo.ui.table(_df_sol, selection=None)]),
-            mo.vstack([mo.md("**Inventory:**"), mo.ui.table(_df_inv, selection=None)])
-        ], gap=1)
-    ], gap=0.3)
+        _viz_rows = []
+        for _p in products_list:
+            _batch_size = df_usage.loc[_p, "Batch Size"]
+            for _t in months_list:
+                _batches = _cached["solution"][_p][_t]
+                _production = _batches * _batch_size
+                _demand = df_demand.loc[_p, _t]
+                _inventory = _cached["inventory"][_p][_t]
+                _viz_rows.append({"Product": _p[:12], "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
+        _viz_df = pd.DataFrame(_viz_rows)
+        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
+
+        _products_left = [p[:12] for p in products_list[:4]]
+        _products_right = [p[:12] for p in products_list[4:]]
+
+        _legend_str = mo.md(
+            """
+            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
+            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
+            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
+            <span style='color:#ef4444'><b>-- Backorders</b></span>
+            """
+        )
+
+        def _make_chart(data, show_legend=False):
+            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
+                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units"),
+                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
+                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
+            )
+            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q"), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
+            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
+
+        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], False)
+        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], False)
+
+        penSlide = sc.create_slide("Sensitivity: Penalty Cost", layout_type="2-column")
+        # Left: Slider + Chart
+        penSlide.content1 = mo.vstack([
+            mo.hstack([mo.md("**Vary Penalty $p_i$:**"), penalty_slider], justify="start", gap=1),
+            mo.md("&nbsp;"),
+            mo.ui.altair_chart(_chart_left)
+        ], gap=0.3)
+        # Right: Status + Legend + Chart
+        penSlide.content2 = mo.vstack([
+            mo.md(f"**Result:** {_status}"),
+            _legend_str,
+            mo.ui.altair_chart(_chart_right)
+        ], gap=0.3)
+    else:
+        penSlide = sc.create_slide("Sensitivity: Penalty Cost", layout_type="1-column")
+        penSlide.content1 = mo.vstack([
+            mo.hstack([mo.md("**Vary Penalty $p_i$:**"), penalty_slider], justify="start", gap=1),
+            mo.md("❌ No cached solution found")
+        ], gap=0.3)
+
     penSlide.render()
     return
 
@@ -1193,6 +1363,9 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(
+    alt,
+    df_demand,
+    df_usage,
     holding_slider,
     mo,
     months_list,
@@ -1201,7 +1374,6 @@ def _(
     products_list,
     sc,
 ):
-    # Load solution from cache (instant!) instead of solving
     _holding_val = holding_slider.value
     _cached = production_cache["holding"].get(str(_holding_val)) if production_cache else None
 
@@ -1210,24 +1382,60 @@ def _(
         _total_backorders = _cached["total_backorders"]
         _total_holding = _cached["total_holding"]
         _status = f"✅ Cost: **${_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
-        _sol_data = [{"Product": _p[:12], **{f"y_{_t}": _cached["solution"][_p][_t] for _t in months_list}} for _p in products_list]
-        _inv_data = [{"Product": _p[:12], **{f"I_{_t}": _cached["inventory"][_p][_t] for _t in months_list}} for _p in products_list]
-        _df_sol = pd.DataFrame(_sol_data)
-        _df_inv = pd.DataFrame(_inv_data)
-    else:
-        _status = "❌ No cached solution found"
-        _df_sol = pd.DataFrame({"Status": ["No solution"]})
-        _df_inv = pd.DataFrame()
 
-    holdSlide = sc.create_slide("Sensitivity: Holding Cost", layout_type="1-column")
-    holdSlide.content1 = mo.vstack([
-        mo.hstack([mo.md("**Vary Holding $h_i$:**"), holding_slider], justify="start", gap=1),
-        mo.md(f"**Result:** {_status}"),
-        mo.hstack([
-            mo.vstack([mo.md("**Production Plan:**"), mo.ui.table(_df_sol, selection=None)]),
-            mo.vstack([mo.md("**Inventory:**"), mo.ui.table(_df_inv, selection=None)])
-        ], gap=1)
-    ], gap=0.3)
+        _viz_rows = []
+        for _p in products_list:
+            _batch_size = df_usage.loc[_p, "Batch Size"]
+            for _t in months_list:
+                _batches = _cached["solution"][_p][_t]
+                _production = _batches * _batch_size
+                _demand = df_demand.loc[_p, _t]
+                _inventory = _cached["inventory"][_p][_t]
+                _viz_rows.append({"Product": _p[:12], "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
+        _viz_df = pd.DataFrame(_viz_rows)
+        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
+
+        _products_left = [p[:12] for p in products_list[:4]]
+        _products_right = [p[:12] for p in products_list[4:]]
+
+        _legend_str = mo.md(
+            """
+            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
+            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
+            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
+            <span style='color:#ef4444'><b>-- Backorders</b></span>
+            """
+        )
+
+        def _make_chart(data, show_legend=False):
+            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
+                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units"),
+                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
+                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
+            )
+            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q"), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
+            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
+
+        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], False)
+        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], False)
+
+        holdSlide = sc.create_slide("Sensitivity: Holding Cost", layout_type="2-column")
+        # Left: Slider + Chart
+        holdSlide.content1 = mo.vstack([
+            mo.hstack([mo.md("**Vary Holding $h_i$:**"), holding_slider], justify="start", gap=1),
+            mo.md("&nbsp;"),
+            mo.ui.altair_chart(_chart_left)
+        ], gap=0.3)
+        # Right: Status + Legend + Chart
+        holdSlide.content2 = mo.vstack([
+            mo.md(f"**Result:** {_status}"),
+            _legend_str,
+            mo.ui.altair_chart(_chart_right)
+        ], gap=0.3)
+    else:
+        holdSlide = sc.create_slide("Sensitivity: Holding Cost", layout_type="1-column")
+        holdSlide.content1 = mo.vstack([mo.hstack([mo.md("**Vary Holding $h_i$:**"), holding_slider], justify="start", gap=1), mo.md("❌ No cached solution found")], gap=0.3)
+
     holdSlide.render()
     return
 
@@ -1241,6 +1449,9 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(
+    alt,
+    df_demand,
+    df_usage,
     init_inv_slider,
     mo,
     months_list,
@@ -1249,7 +1460,6 @@ def _(
     products_list,
     sc,
 ):
-    # Load solution from cache (instant!) instead of solving
     _init_val = init_inv_slider.value
     _cached = production_cache["init_inv"].get(str(_init_val)) if production_cache else None
 
@@ -1258,24 +1468,60 @@ def _(
         _total_backorders = _cached["total_backorders"]
         _total_holding = _cached["total_holding"]
         _status = f"✅ Cost: **${_total_cost:,.0f}** | Backorders: **{_total_backorders:,.0f}** | On-Hand: **{_total_holding:,.0f}**"
-        _sol_data = [{"Product": _p[:12], **{f"y_{_t}": _cached["solution"][_p][_t] for _t in months_list}} for _p in products_list]
-        _inv_data = [{"Product": _p[:12], **{f"I_{_t}": _cached["inventory"][_p][_t] for _t in months_list}} for _p in products_list]
-        _df_sol = pd.DataFrame(_sol_data)
-        _df_inv = pd.DataFrame(_inv_data)
-    else:
-        _status = "❌ No cached solution found"
-        _df_sol = pd.DataFrame({"Status": ["No solution"]})
-        _df_inv = pd.DataFrame()
 
-    initSlide = sc.create_slide("Sensitivity: Initial Inventory", layout_type="1-column")
-    initSlide.content1 = mo.vstack([
-        mo.hstack([mo.md("**Vary Initial Inv. $I_{i0}$:**"), init_inv_slider], justify="start", gap=1),
-        mo.md(f"**Result:** {_status}"),
-        mo.hstack([
-            mo.vstack([mo.md("**Production Plan:**"), mo.ui.table(_df_sol, selection=None)]),
-            mo.vstack([mo.md("**Inventory:**"), mo.ui.table(_df_inv, selection=None)])
-        ], gap=1)
-    ], gap=0.3)
+        _viz_rows = []
+        for _p in products_list:
+            _batch_size = df_usage.loc[_p, "Batch Size"]
+            for _t in months_list:
+                _batches = _cached["solution"][_p][_t]
+                _production = _batches * _batch_size
+                _demand = df_demand.loc[_p, _t]
+                _inventory = _cached["inventory"][_p][_t]
+                _viz_rows.append({"Product": _p[:12], "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
+        _viz_df = pd.DataFrame(_viz_rows)
+        _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
+
+        _products_left = [p[:12] for p in products_list[:4]]
+        _products_right = [p[:12] for p in products_list[4:]]
+
+        _legend_str = mo.md(
+            """
+            <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
+            <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
+            <span style='color:#22c55e'><b>-- On-Hand</b></span> &nbsp;
+            <span style='color:#ef4444'><b>-- Backorders</b></span>
+            """
+        )
+
+        def _make_chart(data, show_legend=False):
+            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
+                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units"),
+                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
+                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
+            )
+            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q"), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
+            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
+
+        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], False)
+        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], False)
+
+        initSlide = sc.create_slide("Sensitivity: Initial Inventory", layout_type="2-column")
+        # Left: Slider + Chart
+        initSlide.content1 = mo.vstack([
+            mo.hstack([mo.md("**Vary Initial Inv. $I_{i0}$:**"), init_inv_slider], justify="start", gap=1),
+            mo.md("&nbsp;"),
+            mo.ui.altair_chart(_chart_left)
+        ], gap=0.3)
+        # Right: Status + Legend + Chart
+        initSlide.content2 = mo.vstack([
+            mo.md(f"**Result:** {_status}"),
+            _legend_str,
+            mo.ui.altair_chart(_chart_right)
+        ], gap=0.3)
+    else:
+        initSlide = sc.create_slide("Sensitivity: Initial Inventory", layout_type="1-column")
+        initSlide.content1 = mo.vstack([mo.hstack([mo.md("**Vary Initial Inv. $I_{i0}$:**"), init_inv_slider], justify="start", gap=1), mo.md("❌ No cached solution found")], gap=0.3)
+
     initSlide.render()
     return
 
