@@ -783,35 +783,41 @@ def _(
         tooltip=["Month", "Type", "Units"]
     ).properties(width=400, height=220)
 
-    # Slide with 2-row layout
-    interactiveSlide = sc.create_slide("Interactive: Single-Product MPS", layout_type="2-row")
+    # Slide with 2-column layout for better side-by-side display
+    interactiveSlide = sc.create_slide("Interactive: Single-Product MPS", layout_type="2-column")
 
+    # Left Column: Controls
     interactiveSlide.content1 = mo.vstack([
         mo.md(f'''**Product:** {product_name} | **Batch Size:** {_b_i} units | **Initial Inventory:** {_I_0} units'''),
+        mo.md("---"),
         mo.md("**Set number of batches per month:**"),
         mo.hstack([
             mo.vstack([mo.md("**Jan**"), slider_jan], align="center"),
             mo.vstack([mo.md("**Feb**"), slider_feb], align="center"),
+        ], justify="start", gap=1),
+        mo.hstack([
             mo.vstack([mo.md("**Mar**"), slider_mar], align="center"),
             mo.vstack([mo.md("**Apr**"), slider_apr], align="center"),
+        ], justify="start", gap=1),
+        mo.hstack([
             mo.vstack([mo.md("**May**"), slider_may], align="center"),
             mo.vstack([mo.md("**Jun**"), slider_jun], align="center"),
-        ], justify="center", gap=1),
-    ], gap=0.3)
-
-    interactiveSlide.content2 = mo.hstack([
-        mo.ui.altair_chart(_chart),
+        ], justify="start", gap=1),
+        mo.md("---"),
         mo.callout(
             mo.md(f'''
-    **Results:**
-
-    🟢 **On-Hand:** {total_holding:,} units
-
-    🔴 **Backorders:** {total_backorders:,} units
+            **Results:**
+            🟢 **On-Hand:** {total_holding:,} units
+            🔴 **Backorders:** {total_backorders:,} units
             '''),
             kind="info"
         )
-    ], justify="center", gap=2)
+    ], gap=0.5)
+
+    # Right Column: Chart
+    interactiveSlide.content2 = mo.vstack([
+         mo.ui.altair_chart(_chart),
+    ], align="center", justify="center")
 
     interactiveSlide.render()
     return
