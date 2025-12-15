@@ -772,6 +772,15 @@ def _(
         value_name="Units"
     )
 
+    # Create title with results
+    _title_text = alt.TitleParams(
+        text=["Interactive MPS Plan"],
+        subtitle=[f"🟢 On-Hand: {total_holding:,} | 🔴 Backorders: {total_backorders:,}"],
+        fontSize=16,
+        subtitleFontSize=14,
+        subtitleColor="#374151"
+    )
+
     _chart = alt.Chart(_chart_df).mark_bar().encode(
         x=alt.X("Month:N", sort=months_list, title="Month"),
         y=alt.Y("Units:Q", title="Units"),
@@ -781,7 +790,11 @@ def _(
         ),
         xOffset="Type:N",
         tooltip=["Month", "Type", "Units"]
-    ).properties(width=400, height=220)
+    ).properties(
+        width=500, 
+        height=350,
+        title=_title_text
+    )
 
     # Slide with 2-column layout for better side-by-side display
     interactiveSlide = sc.create_slide("Interactive: Single-Product MPS", layout_type="2-column")
@@ -803,15 +816,6 @@ def _(
             mo.vstack([mo.md("**May**"), slider_may], align="center"),
             mo.vstack([mo.md("**Jun**"), slider_jun], align="center"),
         ], justify="start", gap=1),
-        mo.md("---"),
-        mo.callout(
-            mo.md(f'''
-            **Results:**
-            🟢 **On-Hand:** {total_holding:,} units
-            🔴 **Backorders:** {total_backorders:,} units
-            '''),
-            kind="info"
-        )
     ], gap=0.5)
 
     # Right Column: Chart
