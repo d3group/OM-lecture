@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.18.0"
+__generated_with = "0.18.1"
 app = marimo.App(
     width="medium",
     app_title="Production Planning and Scheduling",
@@ -485,7 +485,7 @@ def _(SlideCreator):
 
 @app.cell(hide_code=True)
 def _(sc):
-    titleSlide = sc.create_title_slide("Production Planning", subtitle="")
+    titleSlide = sc.create_title_slide("Production Planning - A Basic Model", subtitle="")
     sc.styles()
     titleSlide.render()
     return
@@ -496,7 +496,7 @@ def _(mo, sc):
     caseExampleSlide = sc.create_slide("Case Example", layout_type="2-row")
     caseExampleSlide.content1 = mo.md(
         r'''
-        - Consider a pharmaceutical (contract) manufacturer that makes Amoxicillin-based products for various customers (e.g. Ratiopharm) in one dedicated (beta-lactam) facility
+        - Consider a pharmaceutical manufacturer like Sandoz that makes Amoxicillin-based products in one dedicated (beta-lactam) facility
         - Products:
             1. Amoxicillin 500 mg film-coated tablets, box of 20
             2. Amoxicillin 875 mg film-coated tablets, box of 10
