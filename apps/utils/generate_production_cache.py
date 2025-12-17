@@ -128,15 +128,13 @@ def generate_cache():
     for inv in range(0, 501, 50):
         tasks.append(("init_inv", str(inv), {"init_inv": inv}))
         
-    # Interaction Grid: High-Resolution for Server
-    # Cap: 1500-2400 step 100
-    # Pen: 2.0-20.0 step 0.5
-    # Hold: 0.5-2.0 step 0.1
-    interaction_caps = list(range(1500, 2401, 100))
-    # range(4, 41) * 0.5 -> 2.0 to 20.0
-    interaction_pens = [x * 0.5 for x in range(4, 41)]
-    # range(5, 21) * 0.1 -> 0.5 to 2.0 (rounding to avoid float drift)
-    interaction_holds = [round(x * 0.1, 1) for x in range(5, 21)]
+    # Interaction Grid: Optimized for speed (matches coarse sliders)
+    # Cap: 1500-2400 step 300 => [1500, 1800, 2100, 2400]
+    # Pen: 2-20 step 2 => [2.0, 4.0, ..., 20.0] (10 values)
+    # Hold: 0.5-2.0 step 0.5 => [0.5, 1.0, 1.5, 2.0] (4 values)
+    interaction_caps = [1500, 1800, 2100, 2400]
+    interaction_pens = [float(i) for i in range(2, 21, 2)]
+    interaction_holds = [0.5, 1.0, 1.5, 2.0]
     
     for c in interaction_caps:
         for p in interaction_pens:
