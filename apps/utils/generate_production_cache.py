@@ -69,8 +69,8 @@ def solve_production_planning(capacity=1800, penalty=5.0, holding=0.5, init_inv=
             for p in products_list
         ) <= capacity
 
-    # Use CBC solver with consistent 10s limit and default tolerance for smooth curves
-    model.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=10))
+    # Set timeLimit to 500s, gapRel=0.0 (exact solution)
+    model.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=500, gapRel=0.0))
 
     if model.status == pulp.LpStatusOptimal:
         result = {
@@ -97,7 +97,8 @@ def solve_wrapper(kwargs):
 def generate_cache():
     """Generate all cached solutions using parallel processing."""
     import time
-    from concurrent.futures import ProcessPoolExecutor
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    from tqdm import tqdm
     
     print("Generating base solution...", flush=True)
     start = time.time()
@@ -112,27 +113,28 @@ def generate_cache():
     for cap in range(800, 2501, 100):
         tasks.append(("capacity", str(cap), {"capacity": cap}))
         
-    # Penalty: 1.0-20.0, step=0.5
-    for i in range(10, 201, 5):
-        pen = i / 10.0
+    # Penalty: 1.0-20.0, step=0.5 (Matches slider)
+    for i in range(2, 41):
+        pen = i * 0.5
         tasks.append(("penalty", str(pen), {"penalty": pen}))
         
-    # Holding: 0.1-5.0, step=0.1
+    # Holding: 0.1-5.0, step=0.1 (Matches slider)
+    # Using integers to avoid float precision issues in loop
     for i in range(1, 51):
-        hold = i / 10.0
+        hold = round(i * 0.1, 1)
         tasks.append(("holding", str(hold), {"holding": hold}))
-        
+
     # Init Inv: 0-500, step=50
     for inv in range(0, 501, 50):
         tasks.append(("init_inv", str(inv), {"init_inv": inv}))
         
-    # Interaction Grid: Cap x Pen x Hold (all slider values)
+    # Interaction Grid: Optimized for speed without sacrificing key insights
     # Cap: 1500-2400 step 300 => [1500, 1800, 2100, 2400]
-    # Pen: 1-20 step 1 => [1, 2, 3, ..., 20]
-    # Hold: 0.1-2.0 step 0.1 => [0.1, 0.2, 0.3, ..., 2.0]
+    # Pen: 2-20 step 2 => [2.0, 4.0, ..., 20.0] (10 values)
+    # Hold: 0.5-2.0 step 0.5 => [0.5, 1.0, 1.5, 2.0] (4 values)
     interaction_caps = [1500, 1800, 2100, 2400]
-    interaction_pens = [float(i) for i in range(1, 21)]  # 1.0 to 20.0 in steps of 1
-    interaction_holds = [round(i / 10, 1) for i in range(1, 21)]  # 0.1 to 2.0 in steps of 0.1
+    interaction_pens = [float(i) for i in range(2, 21, 2)]
+    interaction_holds = [0.5, 1.0, 1.5, 2.0]
     
     for c in interaction_caps:
         for p in interaction_pens:
@@ -140,7 +142,7 @@ def generate_cache():
                 key = f"{c}_{p}_{h}"
                 tasks.append(("interaction", key, {"capacity": c, "penalty": p, "holding": h}))
 
-    print(f"Starting parallel generation of {len(tasks)} scenarios...", flush=True)
+    print(f"Starting parallel generation of {len(tasks)} tasks (4 workers)...", flush=True)
     
     cache = {
         "base": None,
@@ -151,13 +153,14 @@ def generate_cache():
         "interaction": {}
     }
     
-    with ProcessPoolExecutor(max_workers=8) as executor:
-        # Submit all tasks
+    import os
+    # Run with max workers for server execution
+    max_workers = os.cpu_count()
+    print(f"Using {max_workers} workers...", flush=True)
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(solve_wrapper, params): (cat, key) for cat, key, params in tasks}
         
-        # Collect results
-        completed = 0
-        for future in futures:
+        for future in tqdm(as_completed(futures), total=len(tasks), desc="Progress"):
             cat, key = futures[future]
             try:
                 result = future.result()
@@ -166,12 +169,8 @@ def generate_cache():
                 else:
                     cache[cat][key] = result
             except Exception as e:
-                print(f"Error in {cat} {key}: {e}")
+                print(f"Error in {cat} {key}: {e}", flush=True)
             
-            completed += 1
-            if completed % 10 == 0:
-                print(f"  Progress: {completed}/{len(tasks)} done ({time.time() - start:.1f}s)", flush=True)
-
     print(f"All done ({time.time() - start:.1f}s)", flush=True)
     return cache
 
