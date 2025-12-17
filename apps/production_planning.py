@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.18.1"
+__generated_with = "0.18.0"
 app = marimo.App(
     width="medium",
     app_title="Production Planning and Scheduling",
@@ -24,6 +24,69 @@ def _():
     from typing import Optional, Iterable
     import html
     return Optional, alt, base64, dataclass, html, json, mo, np, pd, pulp
+
+
+@app.cell
+def _(alt, months_list, pd):
+    def make_split_chart(df_long):
+        # Two side-by-side charts per product row
+        # Manual iteration to avoid "HConcatChart object has no attribute facet"
+
+        products = sorted(df_long["Product"].unique())
+        rows = []
+
+        for i, p in enumerate(products):
+            # Filter for this product
+            df_p = df_long[df_long["Product"] == p]
+
+            # Save vertical space: only show X-axis labels on the bottom row
+            is_last_row = (i == len(products) - 1)
+            x_axis_def = alt.Axis(title=None) if is_last_row else alt.Axis(labels=False, ticks=False, title=None, domain=False)
+
+            base = alt.Chart(df_p).encode(x=alt.X("Month:N", sort=months_list, axis=x_axis_def))
+
+            # --- Unified Color Scale ---
+            # Define one scale for all metrics to avoid Altair resolving conflicts incorrectly
+            domain_all = ["Production", "Demand", "On-Hand", "Backorders"]
+            range_all = ["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]
+
+            # --- Left Chart: Flow (Prod/Demand) ---
+            # Dynamic domain with minimum of 1000
+            max_flow = df_p[df_p["Metric"].isin(["Production", "Demand"])]["Units"].max()
+            domain_flow_top = max(1000, max_flow * 1.05) if not pd.isna(max_flow) else 1000
+
+            chart_flow = base.transform_filter(
+                alt.FieldOneOfPredicate(field="Metric", oneOf=["Production", "Demand"])
+            ).mark_line(strokeWidth=2).encode(
+                # Fixed minExtent for alignment, tickCount=3 to force showing top/bottom labels (0, mid, max)
+                y=alt.Y("Units:Q", title="Prod / Demand", axis=alt.Axis(titleColor="#3b82f6", minExtent=40, tickCount=3), scale=alt.Scale(domain=[0, domain_flow_top])),
+                color=alt.Color("Metric:N", scale=alt.Scale(domain=domain_all, range=range_all), legend=None)
+            )
+            points_flow = chart_flow.mark_circle(size=20)
+            # Increased slightly to 45px to allow axis labels to render
+            final_flow = (chart_flow + points_flow).properties(width=170, height=45)
+
+            # --- Right Chart: Stock (Inv/Back) ---
+            # Dynamic domain with minimum of 1000
+            max_stock = df_p[df_p["Metric"].isin(["On-Hand", "Backorders"])]["Units"].max()
+            domain_stock_top = max(1000, max_stock * 1.05) if not pd.isna(max_stock) else 1000
+
+            chart_stock = base.transform_filter(
+                alt.FieldOneOfPredicate(field="Metric", oneOf=["On-Hand", "Backorders"])
+            ).mark_line(strokeWidth=2, strokeDash=[4, 2]).encode(
+                # Fixed minExtent for alignment, tickCount=3 to force showing top/bottom labels
+                y=alt.Y("Units:Q", title="Inv / Back", axis=alt.Axis(titleColor="#ef4444", minExtent=40, tickCount=3), scale=alt.Scale(domain=[0, domain_stock_top])),
+                color=alt.Color("Metric:N", scale=alt.Scale(domain=domain_all, range=range_all), legend=None)
+            )
+            points_stock = chart_stock.mark_circle(size=20)
+            final_stock = (chart_stock + points_stock).properties(width=170, height=45)
+
+            # Combine side-by-side, add Product title
+            row_grp = (final_flow | final_stock).properties(title=p)
+            rows.append(row_grp)
+
+        return alt.vconcat(*rows, spacing=5)
+    return (make_split_chart,)
 
 
 @app.cell(hide_code=True)
@@ -784,7 +847,7 @@ def _(
     # Line chart for Production and Demand
     _lines = alt.Chart(_chart_df).mark_line(point=True, strokeWidth=3).encode(
         x=alt.X("Month:N", sort=months_list, title="Month"),
-        y=alt.Y("Units:Q", title="Units", scale=alt.Scale(domain=[0, 5000])),
+        y=alt.Y("Units:Q", title="Units", scale=alt.Scale(domain=[0, 8000])),
         color=alt.Color("Metric:N", 
             scale=alt.Scale(
                 domain=["Production", "Demand", "On-Hand", "Backorders"], 
@@ -1114,46 +1177,52 @@ def _(df_usage, mo, sc):
 
 @app.cell(hide_code=True)
 def _(
-    alt,
     df_demand,
     df_usage,
+    make_split_chart,
     mo,
     months_list,
     pd,
     production_cache,
     products_list,
-    sc,
-    status_msg,
 ):
-    # === SLIDE: Optimal Solution with Faceted Visualization ===
+    # Prepare data for Optimal Solution slides
+    _cached_opt = production_cache["capacity"].get("1800") if production_cache else None
+    _opt_found = _cached_opt and _cached_opt.get("status") == "optimal"
 
-    # Build comprehensive data for visualization
-    _cached = production_cache["capacity"].get("1800") if production_cache else None
+    _df_sol_opt = pd.DataFrame()
+    _df_inv_opt = pd.DataFrame()
+    _chart_left_opt = None
+    _chart_right_opt = None
+    _legend_str_opt = None
 
-    if _cached and _cached.get("status") == "optimal":
-        # Build data for all products
+    if _opt_found:
+        # Tables Data
+        _sol_data = [{"Product": _p, **{f"{_t}": _cached_opt["solution"][_p][_t] for _t in months_list}} for _p in products_list]
+        _inv_data = [{"Product": _p, **{f"{_t}": _cached_opt["inventory"][_p][_t] for _t in months_list}} for _p in products_list]
+        _df_sol_opt = pd.DataFrame(_sol_data)
+        _df_inv_opt = pd.DataFrame(_inv_data)
+
+        # Charts Data
         _viz_rows = []
         for _p in products_list:
             _batch_size = df_usage.loc[_p, "Batch Size"]
             for _t in months_list:
-                _batches = _cached["solution"][_p][_t]
+                _batches = _cached_opt["solution"][_p][_t]
                 _production = _batches * _batch_size
                 _demand = df_demand.loc[_p, _t]
-                _inventory = _cached["inventory"][_p][_t]
-                _viz_rows.append({
-                    "Product": _p[:12], "Month": _t,
-                    "Production": _production, "Demand": _demand,
-                    "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)
-                })
-
+                _inventory = _cached_opt["inventory"][_p][_t]
+                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
         _viz_df = pd.DataFrame(_viz_rows)
         _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
 
-        # Split products into two groups for side-by-side display
-        _products_left = [p[:12] for p in products_list[:4]]
-        _products_right = [p[:12] for p in products_list[4:]]
+        _products_left = products_list[:4]
+        _products_right = products_list[4:]
 
-        _legend_str = mo.md(
+        _chart_left_opt = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
+        _chart_right_opt = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
+
+        _legend_str_opt = mo.md(
             """
             <span style='color:#3b82f6'><b>━ Production</b></span> &nbsp;
             <span style='color:#8b5cf6'><b>━ Demand</b></span> &nbsp;
@@ -1162,31 +1231,68 @@ def _(
             """
         )
 
-        def _make_chart(data, show_legend=False):
-            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
-                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units", scale=alt.Scale(domain=[0, 5000])),
-                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
-                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
-            )
-            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q", scale=alt.Scale(domain=[0, 5000])), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
-            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
+    # Export to global scope with public names
+    chart_left_opt = _chart_left_opt
+    chart_right_opt = _chart_right_opt
+    df_inv_opt = _df_inv_opt
+    df_sol_opt = _df_sol_opt
+    legend_str_opt = _legend_str_opt
+    opt_found = _opt_found
+    return (
+        chart_left_opt,
+        chart_right_opt,
+        df_inv_opt,
+        df_sol_opt,
+        legend_str_opt,
+        opt_found,
+    )
 
-        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], show_legend=False)
-        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], show_legend=False)
 
-        solutionSlide = sc.create_slide("Optimal Solution", layout_type="2-column")
+@app.cell(hide_code=True)
+def _(df_inv_opt, df_sol_opt, mo, opt_found, sc, status_msg):
+    # SLIDE: Optimal Solution (Tables)
+    if opt_found:
+        tableSlide = sc.create_slide("Optimal Solution (Tables)", layout_type="1-column")
+        tableSlide.content1 = mo.vstack([
+            mo.md(f"**Result:** {status_msg}"),
+            mo.hstack([
+                mo.vstack([mo.md("**Production Plan (Batches):**"), mo.ui.table(df_sol_opt, selection=None, pagination=False)]),
+                mo.vstack([mo.md("**Inventory Levels:**"), mo.ui.table(df_inv_opt, selection=None, pagination=False)])
+            ], gap=2)
+        ], gap=0.5)
+    else:
+        tableSlide = sc.create_slide("Optimal Solution (Tables)", layout_type="1-column")
+        tableSlide.content1 = mo.md("**No cached solution found**")
+
+    tableSlide.render()
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    chart_left_opt,
+    chart_right_opt,
+    legend_str_opt,
+    mo,
+    opt_found,
+    sc,
+    status_msg,
+):
+    # SLIDE: Optimal Solution (Plots)
+    if opt_found:
+        solutionSlide = sc.create_slide("Optimal Solution (Plots)", layout_type="2-column")
         # Left column: Status + Left Chart
         solutionSlide.content1 = mo.vstack([
             mo.md(f"{status_msg}"),
-            mo.ui.altair_chart(_chart_left)
+            mo.ui.altair_chart(chart_left_opt)
         ], gap=0.5)
         # Right column: Legend + Right Chart
         solutionSlide.content2 = mo.vstack([
-            _legend_str,
-            mo.ui.altair_chart(_chart_right)
+            legend_str_opt,
+            mo.ui.altair_chart(chart_right_opt)
         ], gap=0.5)
     else:
-        solutionSlide = sc.create_slide("Optimal Solution", layout_type="1-column")
+        solutionSlide = sc.create_slide("Optimal Solution (Plots)", layout_type="1-column")
         solutionSlide.content1 = mo.md("**No cached solution found**")
 
     solutionSlide.render()
@@ -1202,10 +1308,10 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(
-    alt,
     capacity_slider,
     df_demand,
     df_usage,
+    make_split_chart,
     mo,
     months_list,
     pd,
@@ -1232,12 +1338,12 @@ def _(
                 _production = _batches * _batch_size
                 _demand = df_demand.loc[_p, _t]
                 _inventory = _cached["inventory"][_p][_t]
-                _viz_rows.append({"Product": _p[:12], "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
+                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
         _viz_df = pd.DataFrame(_viz_rows)
         _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
 
-        _products_left = [p[:12] for p in products_list[:4]]
-        _products_right = [p[:12] for p in products_list[4:]]
+        _products_left = products_list[:4]
+        _products_right = products_list[4:]
 
         _legend_str = mo.md(
             """
@@ -1248,17 +1354,8 @@ def _(
             """
         )
 
-        def _make_chart(data, show_legend=False):
-            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
-                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units", scale=alt.Scale(domain=[0, 5000])),
-                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
-                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
-            )
-            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q", scale=alt.Scale(domain=[0, 5000])), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
-            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
-
-        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], False)
-        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], False)
+        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
+        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
 
         sensitivitySlide = sc.create_slide("Sensitivity: Capacity", layout_type="2-column")
         # Left: Slider + Chart
@@ -1293,9 +1390,9 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(
-    alt,
     df_demand,
     df_usage,
+    make_split_chart,
     mo,
     months_list,
     pd,
@@ -1322,12 +1419,12 @@ def _(
                 _production = _batches * _batch_size
                 _demand = df_demand.loc[_p, _t]
                 _inventory = _cached["inventory"][_p][_t]
-                _viz_rows.append({"Product": _p[:12], "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
+                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
         _viz_df = pd.DataFrame(_viz_rows)
         _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
 
-        _products_left = [p[:12] for p in products_list[:4]]
-        _products_right = [p[:12] for p in products_list[4:]]
+        _products_left = products_list[:4]
+        _products_right = products_list[4:]
 
         _legend_str = mo.md(
             """
@@ -1338,17 +1435,8 @@ def _(
             """
         )
 
-        def _make_chart(data, show_legend=False):
-            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
-                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units", scale=alt.Scale(domain=[0, 5000])),
-                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
-                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
-            )
-            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q", scale=alt.Scale(domain=[0, 5000])), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
-            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
-
-        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], False)
-        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], False)
+        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
+        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
 
         penSlide = sc.create_slide("Sensitivity: Penalty Cost", layout_type="2-column")
         # Left: Slider + Chart
@@ -1383,10 +1471,10 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(
-    alt,
     df_demand,
     df_usage,
     holding_slider,
+    make_split_chart,
     mo,
     months_list,
     pd,
@@ -1411,12 +1499,12 @@ def _(
                 _production = _batches * _batch_size
                 _demand = df_demand.loc[_p, _t]
                 _inventory = _cached["inventory"][_p][_t]
-                _viz_rows.append({"Product": _p[:12], "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
+                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
         _viz_df = pd.DataFrame(_viz_rows)
         _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
 
-        _products_left = [p[:12] for p in products_list[:4]]
-        _products_right = [p[:12] for p in products_list[4:]]
+        _products_left = products_list[:4]
+        _products_right = products_list[4:]
 
         _legend_str = mo.md(
             """
@@ -1427,17 +1515,8 @@ def _(
             """
         )
 
-        def _make_chart(data, show_legend=False):
-            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
-                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units", scale=alt.Scale(domain=[0, 5000])),
-                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
-                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
-            )
-            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q", scale=alt.Scale(domain=[0, 5000])), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
-            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
-
-        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], False)
-        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], False)
+        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
+        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
 
         holdSlide = sc.create_slide("Sensitivity: Holding Cost", layout_type="2-column")
         # Left: Slider + Chart
@@ -1469,10 +1548,10 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(
-    alt,
     df_demand,
     df_usage,
     init_inv_slider,
+    make_split_chart,
     mo,
     months_list,
     pd,
@@ -1497,12 +1576,12 @@ def _(
                 _production = _batches * _batch_size
                 _demand = df_demand.loc[_p, _t]
                 _inventory = _cached["inventory"][_p][_t]
-                _viz_rows.append({"Product": _p[:12], "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
+                _viz_rows.append({"Product": _p, "Month": _t, "Production": _production, "Demand": _demand, "On-Hand": max(0, _inventory), "Backorders": max(0, -_inventory)})
         _viz_df = pd.DataFrame(_viz_rows)
         _viz_long = _viz_df.melt(id_vars=["Product", "Month"], value_vars=["Production", "Demand", "On-Hand", "Backorders"], var_name="Metric", value_name="Units")
 
-        _products_left = [p[:12] for p in products_list[:4]]
-        _products_right = [p[:12] for p in products_list[4:]]
+        _products_left = products_list[:4]
+        _products_right = products_list[4:]
 
         _legend_str = mo.md(
             """
@@ -1513,17 +1592,8 @@ def _(
             """
         )
 
-        def _make_chart(data, show_legend=False):
-            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
-                x=alt.X("Month:N", sort=months_list, title=None), y=alt.Y("Units:Q", title="Units", scale=alt.Scale(domain=[0, 5000])),
-                color=alt.Color("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]), legend=None),
-                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(domain=["Production", "Demand", "On-Hand", "Backorders"], range=[[0], [0], [4, 2], [4, 2]]), legend=None)
-            )
-            _points = alt.Chart(data).mark_circle(size=30).encode(x=alt.X("Month:N", sort=months_list), y=alt.Y("Units:Q", scale=alt.Scale(domain=[0, 5000])), color=alt.Color("Metric:N", legend=None), tooltip=["Product", "Month", "Metric", "Units"])
-            return (_lines + _points).properties(width=360, height=75).facet(row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold")))
-
-        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)], False)
-        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)], False)
+        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
+        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
 
         initSlide = sc.create_slide("Sensitivity: Initial Inventory", layout_type="2-column")
         # Left: Slider + Chart
@@ -1553,14 +1623,13 @@ def _(mo):
         start=1500, stop=2400, value=1800, step=300,
         label="Capacity (hrs/mo)", show_value=True
     )
-    # Penalty uses discrete values: 1.0, 5.0, 10.0, 15.0, 20.0 - use 5.0 step but starting at 0 doesn't work
-    # Instead, use array-based slider approach with index mapping
+    # Penalty uses discrete values: 2, 4, ..., 20 (step 2)
     int_pen = mo.ui.slider(
-        start=1, stop=20, value=5, step=1,
+        start=2, stop=20, value=6, step=2,
         label="Penalty (€/unit)", show_value=True
     )
     int_hold = mo.ui.slider(
-        start=0.1, stop=2.0, value=0.5, step=0.1,
+        start=0.5, stop=2.0, value=0.5, step=0.5,
         label="Holding (€/unit)", show_value=True
     )
     return int_cap, int_hold, int_pen
@@ -1568,12 +1637,12 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(
-    alt,
     df_demand,
     df_usage,
     int_cap,
     int_hold,
     int_pen,
+    make_split_chart,
     mo,
     pd,
     production_cache,
@@ -1610,7 +1679,7 @@ def _(
                 _backorders = max(0, -_inv_level)
 
                 _viz_rows.append({
-                    "Product": _p[:12], "Month": _m_name,
+                    "Product": _p, "Month": _m_name,
                     "Production": _prod_val, "Demand": _dem_val,
                     "On-Hand": _on_hand, "Backorders": _backorders
                 })
@@ -1623,8 +1692,8 @@ def _(
         )
 
         # Split products into left (first 4) and right (last 4)
-        _products_left = [p[:12] for p in products_list[:4]]
-        _products_right = [p[:12] for p in products_list[4:]]
+        _products_left = products_list[:4]
+        _products_right = products_list[4:]
 
         _legend_str = mo.md(
             """
@@ -1635,48 +1704,23 @@ def _(
             """
         )
 
-        def _make_chart(data):
-            # Use fixed Y-axis scale (0-5000) so charts don't rescale when sliders change
-            _lines = alt.Chart(data).mark_line(strokeWidth=2).encode(
-                x=alt.X("Month:N", sort=_months_iter, title=None),
-                y=alt.Y("Units:Q", title="Units", scale=alt.Scale(domain=[0, 5000])),
-                color=alt.Color("Metric:N", scale=alt.Scale(
-                    domain=["Production", "Demand", "On-Hand", "Backorders"],
-                    range=["#3b82f6", "#8b5cf6", "#22c55e", "#ef4444"]
-                ), legend=None),
-                strokeDash=alt.StrokeDash("Metric:N", scale=alt.Scale(
-                    domain=["Production", "Demand", "On-Hand", "Backorders"],
-                    range=[[0], [0], [4, 2], [4, 2]]
-                ), legend=None)
-            )
-            _points = alt.Chart(data).mark_circle(size=30).encode(
-                x=alt.X("Month:N", sort=_months_iter),
-                y=alt.Y("Units:Q", scale=alt.Scale(domain=[0, 5000])),
-                color=alt.Color("Metric:N", legend=None),
-                tooltip=["Product", "Month", "Metric", "Units"]
-            )
-            return (_lines + _points).properties(width=360, height=75).facet(
-                row=alt.Row("Product:N", title=None, header=alt.Header(labelFontSize=11, labelFontWeight="bold"))
-            )
-
-        _chart_left = _make_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
-        _chart_right = _make_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
+        _chart_left = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_left)])
+        _chart_right = make_split_chart(_viz_long[_viz_long["Product"].isin(_products_right)])
 
         interactionSlide = sc.create_slide("Sensitivity: Multi-Parameter Interaction", layout_type="2-column")
         # Left: Sliders + Chart (3 lines of content above chart)
         interactionSlide.content1 = mo.vstack([
             mo.hstack([mo.md("**Vary Parameters:**"), int_cap], justify="start", gap=1),
             mo.hstack([int_pen, int_hold], justify="start", gap=1),
-            mo.md(f"**Result:** {_status}"),
+            mo.md("&nbsp;"), # Spacer to balance height with Result on right
             mo.ui.altair_chart(_chart_left)
         ], gap=0.3)
-        # Right: Legend + Spacer + Chart (3 lines of content above chart for alignment)
+        # Right: Legend + Result + Spacer + Chart (3 lines of content above chart for alignment)
         interactionSlide.content2 = mo.vstack([
             _legend_str,
+            mo.md(f"**Result:** {_status}"),
             mo.md("&nbsp;"),
-            mo.md("&nbsp;"),
-            mo.md("&nbsp;"),
-            mo.ui.altair_chart(_chart_right)
+            mo.ui.altair_chart(_chart_right) # Removed one spacer to keep total lines at 3 before chart
         ], gap=0.3)
     else:
         interactionSlide = sc.create_slide("Sensitivity: Multi-Parameter Interaction", layout_type="1-column")
