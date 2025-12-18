@@ -233,30 +233,48 @@ async def _(json):
                 except AttributeError:
                     pass
 
-            if _loc:
-                _base_url = _loc.href.split('?')[0].split('#')[0]
-                if not _base_url.endswith('/'):
-                     _base_url = _base_url.rsplit('/', 1)[0] + '/'
-                _url = _base_url + "public/mps/production_cache.json"
-            else:
-                # Fallback: relative path (might fail in worker)
-                _url = "public/mps/production_cache.json"
-                print("Warning: Could not determine absolute location in WASM, using relative path.")
+            # Try multiple candidates for robust loading
+            _candidates = [
+                "public/mps/production_cache.json",
+                "../public/mps/production_cache.json",
+                "../../public/mps/production_cache.json"
+            ]
             
-            # Use await with pyfetch
-            print(f"Fetching cache from: {_url}")
-            _res = await pyodide.http.pyfetch(_url)
-            if _res.ok:
-                production_cache = await _res.json()
-                print("Cache loaded successfully.")
-            else:
-                # Try fallback to relative path if absolute fails (just in case)
-                print(f"Absolute fetch failed: {_res.status} {_res.status_text}")
-                _res_retry = await pyodide.http.pyfetch("public/mps/production_cache.json")
-                if _res_retry.ok:
-                    production_cache = await _res_retry.json()
-                else:
-                    print(f"Fetch failed: {_res.status}")
+            # Add absolute path candidate if location is available
+            if _loc:
+                _href = _loc.href
+                print(f"DEBUG: Location href is {_href}")
+                if "/assets/" in _href:
+                    _base = _href.split("/assets/")[0]
+                    if not _base.endswith("/"):
+                        _base += "/"
+                    _candidates.append(_base + "public/mps/production_cache.json")
+                
+                # Also try standard absolute
+                _base2 = _href.split('?')[0].split('#')[0]
+                if not _base2.endswith('/'):
+                     _base2 = _base2.rsplit('/', 1)[0] + '/'
+                _candidates.append(_base2 + "public/mps/production_cache.json")
+
+            production_cache = {}
+            _loaded = False
+            
+            for _url in _candidates:
+                print(f"Trying to fetch cache from: {_url}")
+                try:
+                    _res = await pyodide.http.pyfetch(_url)
+                    if _res.ok:
+                        production_cache = await _res.json()
+                        print(f"Successfully loaded cache from {_url}")
+                        _loaded = True
+                        break
+                    else:
+                        print(f"Failed to fetch {_url}: {_res.status}")
+                except Exception as _e:
+                     print(f"Exception fetching {_url}: {_e}")
+
+            if not _loaded:
+                print("Warning: All cache fetch attempts failed.")
         else:
             # Local Python: File System access
             _possible_paths = [
@@ -726,13 +744,28 @@ def _(base64, mo, sc):
             except AttributeError:
                 pass
 
+        # Try to resolve image URL
+        # We can't check existence easily in WASM without fetching, but for an image src, 
+        # we can just try to construct the most likely correct absolute URL.
+        # If the worker is in 'assets', we need to go up.
+        
+        image_url = "public/mps/production_image.png" # Default fallback
         if _loc:
-            _base_url = _loc.href.split('?')[0].split('#')[0]
-            if not _base_url.endswith('/'):
-                 _base_url = _base_url.rsplit('/', 1)[0] + '/'
-            image_url = _base_url + "public/mps/production_image.png"
+            _href = _loc.href
+            if "/assets/" in _href:
+                _base = _href.split("/assets/")[0]
+                if not _base.endswith("/"):
+                    _base += "/"
+                image_url = _base + "public/mps/production_image.png"
+            else:
+                # Assume we are at root or parallel
+                _base = _href.split('?')[0].split('#')[0]
+                if not _base.endswith('/'):
+                     _base = _base.rsplit('/', 1)[0] + '/'
+                image_url = _base + "public/mps/production_image.png"
         else:
-            image_url = "public/mps/production_image.png"
+             # Fallback 2: try relative up one level if we suspect we are in assets
+             image_url = "../public/mps/production_image.png"
             
     else:
         # Load static image - try multiple paths to handle CWD differences
