@@ -213,8 +213,14 @@ def _(json):
             import pyodide.http
             import js
             
-            # Construct absolute URL from window location to avoid relative path issues in Worker
-            _base_url = js.window.location.href.split('?')[0].split('#')[0]
+            # Construct absolute URL from location (works in Worker too)
+            # Try to get location from global scope (js.location) or window (js.window.location)
+            try:
+                _loc = js.location
+            except AttributeError:
+                _loc = js.window.location
+                
+            _base_url = _loc.href.split('?')[0].split('#')[0]
             if not _base_url.endswith('/'):
                  _base_url = _base_url.rsplit('/', 1)[0] + '/'
             
@@ -676,18 +682,23 @@ def _(caseExampleSlide):
 @app.cell(hide_code=True)
 def _(base64, mo, sc):
     import os
+    import sys
     caseExample2Slide = sc.create_slide("Case Example (2)", layout_type="1-column")
 
-    # Load static image - try multiple paths to handle CWD differences
-    possible_paths = [
-        "public/mps/production_image.png",
-        "apps/public/mps/production_image.png"
-    ]
-    image_path = next((p for p in possible_paths if os.path.exists(p)), "public/mps/production_image.png")
-
-    with open(image_path, "rb") as f:
-        base64_string = base64.b64encode(f.read()).decode("ascii")
-    image_url = f"data:image/png;base64,{base64_string}"
+    if sys.platform == 'emscripten':
+        # In WASM, use the URL directly (browser resolves it relative to page)
+        image_url = "public/mps/production_image.png"
+    else:
+        # Load static image - try multiple paths to handle CWD differences
+        possible_paths = [
+            "public/mps/production_image.png",
+            "apps/public/mps/production_image.png"
+        ]
+        image_path = next((p for p in possible_paths if os.path.exists(p)), "public/mps/production_image.png")
+    
+        with open(image_path, "rb") as f:
+            base64_string = base64.b64encode(f.read()).decode("ascii")
+        image_url = f"data:image/png;base64,{base64_string}"
 
     caseExample2Slide.content1 = mo.md(
         f'''\
