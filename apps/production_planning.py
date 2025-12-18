@@ -24,7 +24,9 @@ def _():
     import html
     import sys
     import os
-    return Optional, alt, base64, dataclass, html, json, mo, np, pd, pulp, sys, os
+    import warnings
+    warnings.filterwarnings("ignore", message=".*narwhals.*is_pandas_dataframe.*")
+    return Optional, alt, base64, dataclass, html, json, mo, np, pd, pulp, sys, os, warnings
 
 
 @app.cell
