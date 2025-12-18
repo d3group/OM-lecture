@@ -211,25 +211,25 @@ async def _(json):
         if _sys.platform == 'emscripten':
             # WASM/Pyodide: Fetch via HTTP (Async)
             import pyodide.http
-            import js
+            import js as _js
             
             # Construct absolute URL from location (works in Worker too)
             # Try to get location from various scopes
             _loc = None
             try:
-                _loc = js.location
+                _loc = _js.location
             except AttributeError:
                 pass
             
             if not _loc:
                 try:
-                    _loc = js.self.location
+                    _loc = _js.self.location
                 except AttributeError:
                     pass
                     
             if not _loc:
                 try:
-                    _loc = js.window.location
+                    _loc = _js.window.location
                 except AttributeError:
                     pass
 
@@ -707,22 +707,22 @@ def _(base64, mo, sc):
     if sys.platform == 'emscripten':
         # In WASM, use the URL directly (browser resolves it relative to page)
         # Robustly determine base URL to avoid relative path issues in Worker
-        import js
+        import js as _js
         _loc = None
         try:
-            _loc = js.location
+            _loc = _js.location
         except AttributeError:
             pass
         
         if not _loc:
             try:
-                _loc = js.self.location
+                _loc = _js.self.location
             except AttributeError:
                 pass
                 
         if not _loc:
             try:
-                _loc = js.window.location
+                _loc = _js.window.location
             except AttributeError:
                 pass
 
