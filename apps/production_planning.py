@@ -214,22 +214,41 @@ def _(json):
             import js
             
             # Construct absolute URL from location (works in Worker too)
-            # Try to get location from global scope (js.location) or window (js.window.location)
+            # Try to get location from various scopes
+            _loc = None
             try:
                 _loc = js.location
             except AttributeError:
-                _loc = js.window.location
-                
-            _base_url = _loc.href.split('?')[0].split('#')[0]
-            if not _base_url.endswith('/'):
-                 _base_url = _base_url.rsplit('/', 1)[0] + '/'
+                pass
             
-            _url = _base_url + "public/mps/production_cache.json"
+            if not _loc:
+                try:
+                    _loc = js.self.location
+                except AttributeError:
+                    pass
+                    
+            if not _loc:
+                try:
+                    _loc = js.window.location
+                except AttributeError:
+                    pass
+
+            if _loc:
+                _base_url = _loc.href.split('?')[0].split('#')[0]
+                if not _base_url.endswith('/'):
+                     _base_url = _base_url.rsplit('/', 1)[0] + '/'
+                _url = _base_url + "public/mps/production_cache.json"
+            else:
+                # Fallback: relative path (might fail in worker)
+                _url = "public/mps/production_cache.json"
+                print("Warning: Could not determine absolute location in WASM, using relative path.")
             
             # Use await with pyfetch
+            print(f"Fetching cache from: {_url}")
             _res = await pyodide.http.pyfetch(_url)
             if _res.ok:
                 production_cache = await _res.json()
+                print("Cache loaded successfully.")
             else:
                 # Try fallback to relative path if absolute fails (just in case)
                 print(f"Absolute fetch failed: {_res.status} {_res.status_text}")
@@ -687,7 +706,34 @@ def _(base64, mo, sc):
 
     if sys.platform == 'emscripten':
         # In WASM, use the URL directly (browser resolves it relative to page)
-        image_url = "public/mps/production_image.png"
+        # Robustly determine base URL to avoid relative path issues in Worker
+        import js
+        _loc = None
+        try:
+            _loc = js.location
+        except AttributeError:
+            pass
+        
+        if not _loc:
+            try:
+                _loc = js.self.location
+            except AttributeError:
+                pass
+                
+        if not _loc:
+            try:
+                _loc = js.window.location
+            except AttributeError:
+                pass
+
+        if _loc:
+            _base_url = _loc.href.split('?')[0].split('#')[0]
+            if not _base_url.endswith('/'):
+                 _base_url = _base_url.rsplit('/', 1)[0] + '/'
+            image_url = _base_url + "public/mps/production_image.png"
+        else:
+            image_url = "public/mps/production_image.png"
+            
     else:
         # Load static image - try multiple paths to handle CWD differences
         possible_paths = [
