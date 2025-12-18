@@ -200,7 +200,7 @@ def _(np, pulp):
 
 
 @app.cell(hide_code=True)
-def _(json):
+async def _(json):
     # Load pre-computed solutions cache for instant WASM performance
     import os as _os
     import sys as _sys
@@ -209,12 +209,17 @@ def _(json):
     
     try:
         if _sys.platform == 'emscripten':
-            # WASM/Pyodide: Fetch via HTTP
-            # Use pyodide.http.open_url for synchronous fetch in Pyodide
+            # WASM/Pyodide: Fetch via HTTP (Async)
+            # Use pyodide.http.pyfetch for robust fetch
             import pyodide.http
             _url = "public/mps/production_cache.json"
-            with pyodide.http.open_url(_url) as _f:
-                production_cache = json.load(_f)
+            
+            # Use await with pyfetch
+            _res = await pyodide.http.pyfetch(_url)
+            if _res.ok:
+                production_cache = await _res.json()
+            else:
+                print(f"Fetch failed: {_res.status} {_res.status_text}")
         else:
             # Local Python: File System access
             _possible_paths = [
@@ -227,7 +232,6 @@ def _(json):
                 with open(_cache_path, "r") as _f:
                     production_cache = json.load(_f)
             else:
-                # Cache not found locally, will rely on on-the-fly solving
                 pass
                 
     except Exception as e:
