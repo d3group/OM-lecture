@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.18.0"
+__generated_with = "0.18.1"
 app = marimo.App(
     width="medium",
     app_title="Production Planning and Scheduling",
@@ -1250,9 +1250,9 @@ def _(
 
 @app.cell(hide_code=True)
 def _(df_inv_opt, df_sol_opt, mo, opt_found, sc, status_msg):
-    # SLIDE: Optimal Solution (Tables)
+    # SLIDE: Our Master Production Schedule (MPS) 
     if opt_found:
-        tableSlide = sc.create_slide("Optimal Solution (Tables)", layout_type="1-column")
+        tableSlide = sc.create_slide("Our Master Production Schedule (MPS)", layout_type="1-column")
         tableSlide.content1 = mo.vstack([
             mo.md(f"**Result:** {status_msg}"),
             mo.hstack([
@@ -1714,14 +1714,14 @@ def _(
             mo.hstack([int_pen, int_hold], justify="start", gap=1),
             mo.md("&nbsp;"), # Spacer to balance height with Result on right
             mo.ui.altair_chart(_chart_left)
-        ], gap=0.3)
+        ], gap=0.1)
         # Right: Legend + Result + Spacer + Chart (3 lines of content above chart for alignment)
         interactionSlide.content2 = mo.vstack([
             _legend_str,
             mo.md(f"**Result:** {_status}"),
             mo.md("&nbsp;"),
             mo.ui.altair_chart(_chart_right) # Removed one spacer to keep total lines at 3 before chart
-        ], gap=0.3)
+        ], gap=1.1)
     else:
         interactionSlide = sc.create_slide("Sensitivity: Multi-Parameter Interaction", layout_type="1-column")
         interactionSlide.content1 = mo.vstack([
