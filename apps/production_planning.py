@@ -1,10 +1,9 @@
 import marimo
 
-__generated_with = "0.18.1"
+__generated_with = "0.18.0"
 app = marimo.App(
     width="medium",
     app_title="Production Planning and Scheduling",
-    layout_file="layouts/production_planning.slides.json",
     css_file="d3.css",
 )
 
@@ -62,9 +61,9 @@ def _(alt, months_list, pd):
                 y=alt.Y("Units:Q", title="Prod / Demand", axis=alt.Axis(titleColor="#3b82f6", minExtent=40, tickCount=3), scale=alt.Scale(domain=[0, domain_flow_top])),
                 color=alt.Color("Metric:N", scale=alt.Scale(domain=domain_all, range=range_all), legend=None)
             )
-            points_flow = chart_flow.mark_circle(size=20)
+            points_flow = chart_flow.mark_circle(size=15)
             # Increased slightly to 45px to allow axis labels to render
-            final_flow = (chart_flow + points_flow).properties(width=170, height=45)
+            final_flow = (chart_flow + points_flow).properties(width=160, height=35)
 
             # --- Right Chart: Stock (Inv/Back) ---
             # Dynamic domain with minimum of 1000
@@ -78,11 +77,12 @@ def _(alt, months_list, pd):
                 y=alt.Y("Units:Q", title="Inv / Back", axis=alt.Axis(titleColor="#ef4444", minExtent=40, tickCount=3), scale=alt.Scale(domain=[0, domain_stock_top])),
                 color=alt.Color("Metric:N", scale=alt.Scale(domain=domain_all, range=range_all), legend=None)
             )
-            points_stock = chart_stock.mark_circle(size=20)
-            final_stock = (chart_stock + points_stock).properties(width=170, height=45)
+            points_stock = chart_stock.mark_circle(size=15)
+            final_stock = (chart_stock + points_stock).properties(width=160, height=35)
 
             # Combine side-by-side, add Product title
-            row_grp = (final_flow | final_stock).properties(title=p)
+            # Use title params if needed, or simplified title
+            row_grp = (final_flow | final_stock).properties(title=alt.TitleParams(p, anchor="start", fontSize=12, offset=5))
             rows.append(row_grp)
 
         return alt.vconcat(*rows, spacing=5)
@@ -283,7 +283,7 @@ def _(Optional, dataclass, html, mo):
                 f'''
                 <div class="slide-body title-center" style="flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; height: 100%;">
                   <div class="title-stack" style="text-align: center;">
-                    <div class="title-slide-title" style="font-size: 50px; font-weight: 800; margin: 0 0 8px 0;">{safe_title}</div>
+                    <div class="title-slide-title" style="font-size: 36px; font-weight: 800; margin: 0 0 8px 0;">{safe_title}</div>
                     {sub}
                     <div class="title-slide-meta" style="font-size: 30px; color: #6B7280;">{html.escape(self.course)}</div>
                     <div class="title-slide-meta" style="font-size: 22px; color: #6B7280;">{html.escape(self.presenter)}</div>
@@ -454,6 +454,60 @@ def _(Optional, dataclass, html, mo):
                     box-shadow: 0 0 0 1px #f3f4f6;
                     overflow: hidden !important;
                     margin-bottom: 40px !important;
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    page-break-after: always !important;
+                    break-after: page !important;
+                  }}
+                  @media print {{
+                    :root {{
+                        --slide-w: 1100px !important;
+                        --slide-h: 700px !important;
+                    }}
+                    @page {{
+                        size: landscape;
+                        margin: 0;
+                    }}
+                    html, body {{
+                        width: 100% !important;
+                        height: 100% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }}
+                    .slide-container {{
+                        display: block !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        overflow: visible !important;
+                    }}
+                    div.slide, .slide {{
+                        /* Override inline min/max constraints */
+                        min-width: 0 !important;
+                        max-width: none !important;
+                        min-height: 0 !important;
+                        max-height: none !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        zoom: normal !important;
+                        margin: 0 auto !important;
+                        padding: 30px !important; 
+                        box-shadow: none !important;
+                        border: none !important;
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        page-break-after: always !important;
+                        break-after: page !important;
+                        print-color-adjust: exact !important;
+                        -webkit-print-color-adjust: exact !important;
+                        overflow: visible !important; 
+                    }}
+                    /* Hide floating UI like the "1 of 25" controls */
+                    div[class*="fixed"], button, .marimo-presentation-controls {{
+                        display: none !important;
+                    }}
+                    marimo-app > div:not(.slide-container) {{
+                        display: none !important;
+                    }}
                   }}
                   div.slide-title, .slide-title {{
                     font-size: var(--title-size) !important;
@@ -511,9 +565,12 @@ def _(Optional, dataclass, html, mo):
                     text-align: center !important;
                   }}
                   div.title-slide-title, .title-slide-title {{
-                    font-size: 40px !important;
+                    font-size: 36px !important;
                     font-weight: 800 !important;
                     margin: 0 0 8px 0 !important;
+                    word-wrap: break-word !important;
+                    overflow-wrap: break-word !important;
+                    max-width: 100% !important;
                   }}
                   div.title-slide-sub, .title-slide-sub {{
                     font-size: 20px !important;
@@ -862,8 +919,8 @@ def _(
         ),
         tooltip=["Month", "Metric", "Units"]
     ).properties(
-        width=500, 
-        height=350,
+        width=420, 
+        height=300,
         title=_title_text
     )
 
