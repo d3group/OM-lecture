@@ -209,12 +209,29 @@ def _(json):
     
     try:
         if _sys.platform == 'emscripten':
-            # WASM/Pyodide: Fetch via HTTP
-            # Use pyodide.http.open_url for synchronous fetch in Pyodide
+            # WASM/Pyodide: Fetch via HTTP (Async)
             import pyodide.http
-            _url = "public/mps/production_cache.json"
-            with pyodide.http.open_url(_url) as _f:
-                production_cache = json.load(_f)
+            import js
+            
+            # Construct absolute URL from window location to avoid relative path issues in Worker
+            _base_url = js.window.location.href.split('?')[0].split('#')[0]
+            if not _base_url.endswith('/'):
+                 _base_url = _base_url.rsplit('/', 1)[0] + '/'
+            
+            _url = _base_url + "public/mps/production_cache.json"
+            
+            # Use await with pyfetch
+            _res = await pyodide.http.pyfetch(_url)
+            if _res.ok:
+                production_cache = await _res.json()
+            else:
+                # Try fallback to relative path if absolute fails (just in case)
+                print(f"Absolute fetch failed: {_res.status} {_res.status_text}")
+                _res_retry = await pyodide.http.pyfetch("public/mps/production_cache.json")
+                if _res_retry.ok:
+                    production_cache = await _res_retry.json()
+                else:
+                    print(f"Fetch failed: {_res.status}")
         else:
             # Local Python: File System access
             _possible_paths = [
