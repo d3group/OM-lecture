@@ -200,7 +200,7 @@ def _(np, pulp):
 
 
 @app.cell(hide_code=True)
-def _(json):
+async def _(json):
     # Load pre-computed solutions cache for instant WASM performance
     import os as _os
     import sys as _sys
