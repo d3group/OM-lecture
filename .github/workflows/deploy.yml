@@ -19,7 +19,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install marimo nbformat
+          pip install marimo nbformat pulp pandas altair
 
       - name: Export demand management app as HTML
         run: marimo export html-wasm apps/demand_management.py -o site/demand_management --mode edit
@@ -62,6 +62,12 @@ jobs:
 
       - name: Export warehouse location part 2 app as Jupyter Notebook
         run: marimo export ipynb apps/warehouse_location_part_2.py -o site/downloads/warehouse_location_part_2.ipynb
+
+      - name: Export production planning app as HTML
+        run: MARIMO_OUTPUT_MAX_BYTES=50000000 marimo export html-wasm apps/production_planning.py -o site/production_planning --mode edit
+
+      - name: Export production planning app as Jupyter Notebook
+        run: marimo export ipynb apps/production_planning.py -o site/downloads/production_planning.ipynb
 
       - name: Upload Pages Artifact
         if: github.ref == 'refs/heads/main'
