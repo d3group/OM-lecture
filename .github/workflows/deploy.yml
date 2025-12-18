@@ -66,6 +66,9 @@ jobs:
       - name: Export production planning app as HTML
         run: MARIMO_OUTPUT_MAX_BYTES=50000000 marimo export html-wasm apps/production_planning.py -o site/production_planning --mode edit
 
+      - name: Copy public assets to production_planning-site
+        run: cp -r apps/public site/production_planning/
+
       - name: Export production planning app as Jupyter Notebook
         run: marimo export ipynb apps/production_planning.py -o site/downloads/production_planning.ipynb
 
