@@ -22,7 +22,9 @@ def _():
     from dataclasses import dataclass
     from typing import Optional, Iterable
     import html
-    return Optional, alt, base64, dataclass, html, json, mo, np, pd, pulp
+    import sys
+    import os
+    return Optional, alt, base64, dataclass, html, json, mo, np, pd, pulp, sys, os
 
 
 @app.cell
@@ -197,104 +199,70 @@ def _(np, pulp):
             prob.status = pulp.LpStatusNotSolved
         return prob
     return
+    
+    
+@app.cell(hide_code=True)
+def _(sys):
+    from pathlib import Path
+
+    GH_USER = "d3group"
+    GH_REPO = "OM-lecture"
+    BRANCH = "main"
+
+    def raw_url(*parts: str) -> str:
+        path = "/".join(parts)
+        return f"https://raw.githubusercontent.com/{GH_USER}/{GH_REPO}/{BRANCH}/{path}"
+
+    in_wasm = sys.platform == 'emscripten'
+    
+    # Robust local path detection
+    _candidates = [
+        Path("apps/public/mps"),
+        Path("public/mps"),
+        Path("../public/mps") 
+    ]
+    local_data_dir = next((p for p in _candidates if p.exists() and p.is_dir()), None)
+
+    use_local = (local_data_dir is not None) and not in_wasm
+
+    class DataURLs:
+        if use_local:
+            BASE = str(local_data_dir)
+            IMG_BASE = str(local_data_dir)
+        else:
+            BASE = raw_url("apps", "public", "mps")
+            IMG_BASE = "public/mps"
+            
+    return DataURLs,
 
 
 @app.cell(hide_code=True)
-async def _(json):
-    # Load pre-computed solutions cache for instant WASM performance
-    import os as _os
-    import sys as _sys
+async def _(DataURLs, json, os, sys):
+    # Load pre-computed solutions cache
     
     production_cache = {}
     
     try:
-        if _sys.platform == 'emscripten':
-            # WASM/Pyodide: Fetch via HTTP (Async)
+        if sys.platform == 'emscripten':
             import pyodide.http
-            import js as _js
-            
-            # Construct absolute URL from location (works in Worker too)
-            # Try to get location from various scopes
-            _loc = None
-            try:
-                _loc = _js.location
-            except AttributeError:
-                pass
-            
-            if not _loc:
-                try:
-                    _loc = _js.self.location
-                except AttributeError:
-                    pass
-                    
-            if not _loc:
-                try:
-                    _loc = _js.window.location
-                except AttributeError:
-                    pass
-
-            # Try multiple candidates for robust loading
-            _candidates = [
-                "public/mps/production_cache.json",
-                "../public/mps/production_cache.json",
-                "../../public/mps/production_cache.json"
-            ]
-            
-            # Add absolute path candidate if location is available
-            if _loc:
-                _href = _loc.href
-                print(f"DEBUG: Location href is {_href}")
-                if "/assets/" in _href:
-                    _base = _href.split("/assets/")[0]
-                    if not _base.endswith("/"):
-                        _base += "/"
-                    _candidates.append(_base + "public/mps/production_cache.json")
-                
-                # Also try standard absolute
-                _base2 = _href.split('?')[0].split('#')[0]
-                if not _base2.endswith('/'):
-                     _base2 = _base2.rsplit('/', 1)[0] + '/'
-                _candidates.append(_base2 + "public/mps/production_cache.json")
-
-            production_cache = {}
-            _loaded = False
-            
-            for _url in _candidates:
-                print(f"Trying to fetch cache from: {_url}")
-                try:
-                    _res = await pyodide.http.pyfetch(_url)
-                    if _res.ok:
-                        production_cache = await _res.json()
-                        print(f"Successfully loaded cache from {_url}")
-                        _loaded = True
-                        break
-                    else:
-                        print(f"Failed to fetch {_url}: {_res.status}")
-                except Exception as _e:
-                     print(f"Exception fetching {_url}: {_e}")
-
-            if not _loaded:
-                print("Warning: All cache fetch attempts failed.")
-        else:
-            # Local Python: File System access
-            _possible_paths = [
-                "public/mps/production_cache.json",
-                "apps/public/mps/production_cache.json"
-            ]
-            _cache_path = next((p for p in _possible_paths if _os.path.exists(p)), None)
-            
-            if _cache_path:
-                with open(_cache_path, "r") as _f:
-                    production_cache = json.load(_f)
+            url = f"{DataURLs.BASE}/production_cache.json"
+            print(f"Fetching cache from: {url}")
+            res = await pyodide.http.pyfetch(url)
+            if res.ok:
+                production_cache = await res.json()
+                print("Successfully loaded cache")
             else:
-                # Cache not found locally, will rely on on-the-fly solving
-                pass
+                print(f"Failed to fetch cache: {res.status}")
+        else:
+            path = f"{DataURLs.BASE}/production_cache.json"
+            if os.path.exists(path):
+                with open(path, "r") as f:
+                    production_cache = json.load(f)
+            else:
+                print(f"Cache file not found at {path}")
                 
     except Exception as e:
-        # Fallback: empty cache (will solve on-the-fly)
-        # Log error to console for debugging
         print(f"Warning: Failed to load production_cache: {e}")
-        pass
         
     return (production_cache,)
 
@@ -717,73 +685,18 @@ def _(caseExampleSlide):
 
 
 @app.cell(hide_code=True)
-def _(base64, mo, sc):
-    import os
-    import sys
+def _(DataURLs, mo, sc):
     caseExample2Slide = sc.create_slide("Case Example (2)", layout_type="1-column")
-
-    if sys.platform == 'emscripten':
-        # In WASM, use the URL directly (browser resolves it relative to page)
-        # Robustly determine base URL to avoid relative path issues in Worker
-        import js as _js
-        _loc = None
-        try:
-            _loc = _js.location
-        except AttributeError:
-            pass
-        
-        if not _loc:
-            try:
-                _loc = _js.self.location
-            except AttributeError:
-                pass
-                
-        if not _loc:
-            try:
-                _loc = _js.window.location
-            except AttributeError:
-                pass
-
-        # Try to resolve image URL
-        # We can't check existence easily in WASM without fetching, but for an image src, 
-        # we can just try to construct the most likely correct absolute URL.
-        # If the worker is in 'assets', we need to go up.
-        
-        image_url = "public/mps/production_image.png" # Default fallback
-        if _loc:
-            _href = _loc.href
-            if "/assets/" in _href:
-                _base = _href.split("/assets/")[0]
-                if not _base.endswith("/"):
-                    _base += "/"
-                image_url = _base + "public/mps/production_image.png"
-            else:
-                # Assume we are at root or parallel
-                _base = _href.split('?')[0].split('#')[0]
-                if not _base.endswith('/'):
-                     _base = _base.rsplit('/', 1)[0] + '/'
-                image_url = _base + "public/mps/production_image.png"
-        else:
-             # Fallback 2: try relative up one level if we suspect we are in assets
-             image_url = "../public/mps/production_image.png"
-            
-    else:
-        # Load static image - try multiple paths to handle CWD differences
-        possible_paths = [
-            "public/mps/production_image.png",
-            "apps/public/mps/production_image.png"
-        ]
-        image_path = next((p for p in possible_paths if os.path.exists(p)), "public/mps/production_image.png")
     
-        with open(image_path, "rb") as f:
-            base64_string = base64.b64encode(f.read()).decode("ascii")
-        image_url = f"data:image/png;base64,{base64_string}"
+    image_url = f"{DataURLs.IMG_BASE}/production_image.png"
 
     caseExample2Slide.content1 = mo.md(
-        f'''\
-        \n        <div style="text-align: center;"><img src="{image_url}" style="max-width: 55%; height: auto;" /></div>\
-        \n        **In our simplified model, we treat Line 2 (tablet line) as the bottleneck resource.**\
-        \n        MPS and scheduling are about deciding which products use how many hours on this line in each period.\
+        f'''
+        <div style="text-align: center;"><img src="{image_url}" style="max-width: 55%; height: auto;" /></div>
+        
+        **In our simplified model, we treat Line 2 (tablet line) as the bottleneck resource.**
+        
+        MPS and scheduling are about deciding which products use how many hours on this line in each period.
         '''
     )
 
