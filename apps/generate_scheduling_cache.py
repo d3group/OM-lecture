@@ -147,8 +147,15 @@ def solve_scheduling(
             due = int(min(max(1, jobs_df.loc[j, "due"]), days_in_month))
             prob += T[j] >= C[j] - due
 
+    # Try Gurobi first (much faster), fall back to CBC
     try:
-        status = prob.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s))
+        import gurobipy
+        solver = pulp.GUROBI_CMD(msg=0, timeLimit=time_limit_s)
+    except:
+        solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s)
+    
+    try:
+        status = prob.solve(solver)
     except Exception as e:
         return None, f"Solver error: {e}"
 
