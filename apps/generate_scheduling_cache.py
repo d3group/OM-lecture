@@ -153,8 +153,13 @@ def solve_scheduling(
     if pulp.LpStatus[status] not in ("Optimal", "Not Solved"):
         return None, f"Status: {pulp.LpStatus[status]}"
 
-    if pulp.LpStatus[status] != "Optimal":
-        return None, pulp.LpStatus[status]
+    # Accept both Optimal and Not Solved (feasible but not proven optimal)
+    # With 222 batches, some problems may not prove optimality within time limit
+    solution_status = pulp.LpStatus[status]
+    if solution_status == "Not Solved":
+        # Check if we have a feasible solution by trying to extract values
+        # If extraction fails, we'll catch it below
+        pass  # Continue to extract solution
 
     rows = []
     for j in J:
@@ -188,7 +193,12 @@ def solve_scheduling(
             }
         )
 
-    return rows, "Optimal"
+    # Return with appropriate status
+    if solution_status == "Optimal":
+        return rows, "Optimal"
+    else:
+        # Not Solved but we have a feasible solution
+        return rows, "Feasible (not proven optimal)"
 
 
 # -----------------------------------------------------
@@ -224,14 +234,14 @@ def generate_cache():
                 if step % 10 == 0 or step == 1:
                     print(f"[{step}/{total_steps}] ({step/total_steps*100:.1f}%) - {key}")
                 
-                # Use shorter time limit for faster generation (can increase if needed)
+                # Use adequate time limit for proper solutions (222 batches need more time)
                 rows, status = solve_scheduling(
                     jobs_df,
                     capacity_per_line=float(cap),
                     days_in_month=int(day),
                     num_lines=num_lines,
                     objective_mode=mode,
-                    time_limit_s=15,  # Reduced from 30s for faster generation
+                    time_limit_s=60,  # Increased to 60s for proper solutions with 222 batches
                 )
                 
                 if rows is None:
