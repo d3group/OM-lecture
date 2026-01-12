@@ -473,7 +473,7 @@ def _(mo, sc):
     # Inputs: Batches from MPS
     inputs_batches_slide = sc.create_slide("Inputs: Batches from MPS", layout_type="1-column")
     # Calculate totals for display
-    total_batches = sum([33, 27, 27, 27, 27, 27, 27, 27])  # 222 batches
+    total_batches = sum([26, 26, 26, 26, 26, 26, 26, 26])  # 208 batches
     
     inputs_batches_slide.content1 = mo.md(f"""
     For one specific month (say **March**), the Master Production Schedule has already decided:
@@ -484,14 +484,14 @@ def _(mo, sc):
 
     | Product | Batches ($y_i^{{\\text{{MPS}}}}$) | Hours/Batch ($u_i$) |
     |:--------|:----------------------------:|:-------------------:|
-    | Amox 500mg | 33 | 8.5 |
-    | Amox 875mg | 27 | 9.5 |
-    | Amox 1000mg | 27 | 7.5 |
-    | Amox/Clav 500/125 | 27 | 8.0 |
-    | Amox/Clav 875/125 | 27 | 9.0 |
-    | Ampicillin 500mg | 27 | 8.5 |
-    | Fluclox 500mg | 27 | 7.0 |
-    | Amox 250mg Chew | 27 | 8.0 |
+    | Amox 500mg | 26 | 8.5 |
+    | Amox 875mg | 26 | 9.5 |
+    | Amox 1000mg | 26 | 7.5 |
+    | Amox/Clav 500/125 | 26 | 8.0 |
+    | Amox/Clav 875/125 | 26 | 9.0 |
+    | Ampicillin 500mg | 26 | 8.5 |
+    | Fluclox 500mg | 26 | 7.0 |
+    | Amox 250mg Chew | 26 | 8.0 |
 
     **Total:** $\\sum_{{i=1}}^{{8}} y_i^{{\\text{{MPS}}}} = {total_batches}$ jobs (batches)
     """)
@@ -506,16 +506,16 @@ def _(inputs_batches_slide):
 
 @app.cell(hide_code=True)
 def _(np, pd):
-    # Adjusted batch counts to make problem slightly tight (total work slightly exceeds 1800h capacity)
+    # Adjusted batch counts to make problem slightly tight (close to 1800h capacity, still feasible for most scenarios)
     mps_march_counts = {
-        "Amox 500mg (20)": 33,
-        "Amox 875mg (10)": 27,
-        "Amox 1000mg (14)": 27,
-        "Amox/Clav 500/125mg (20)": 27,
-        "Amox/Clav 875/125mg (10)": 27,
-        "Ampicillin 500mg (20)": 27,
-        "Fluclox 500mg (20)": 27,
-        "Amox 250mg Chew (20)": 27,
+        "Amox 500mg (20)": 26,
+        "Amox 875mg (10)": 26,
+        "Amox 1000mg (14)": 26,
+        "Amox/Clav 500/125mg (20)": 26,
+        "Amox/Clav 875/125mg (10)": 26,
+        "Ampicillin 500mg (20)": 26,
+        "Fluclox 500mg (20)": 26,
+        "Amox 250mg Chew (20)": 26,
     }
 
     proc_times = {
@@ -685,7 +685,7 @@ def _(mo, mps_march_counts, proc_times, sc):
     **30 working days:** $30 \\times 3 \\times 20 = {available_capacity_30d}$ hours  
     **Slack:** ${slack_30d:.1f}\\%$
 
-    > The problem is **slightly tight** — total work slightly exceeds the 1,800h capacity, making scheduling decisions non-trivial.
+    > The problem is **slightly tight** — total work is close to the 1,800h capacity (3.8% slack), making scheduling decisions non-trivial.
     """)
     return (inputs_capacity_analysis_slide,)
 
