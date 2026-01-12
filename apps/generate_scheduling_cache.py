@@ -17,16 +17,16 @@ from pathlib import Path
 # -----------------------------------------------------
 def get_jobs_df():
     """Generate the same job data as in production_scheduling.py"""
-    # Adjusted batch counts to make problem slightly tight (close to 1800h capacity, still feasible for most scenarios)
+    # Adjusted batch counts to make problem slightly tight (close to 1800h capacity, allows more feasible scenarios)
     mps_march_counts = {
-        "Amox 500mg (20)": 26,
-        "Amox 875mg (10)": 26,
-        "Amox 1000mg (14)": 26,
-        "Amox/Clav 500/125mg (20)": 26,
-        "Amox/Clav 875/125mg (10)": 26,
-        "Ampicillin 500mg (20)": 26,
-        "Fluclox 500mg (20)": 26,
-        "Amox 250mg Chew (20)": 26,
+        "Amox 500mg (20)": 24,
+        "Amox 875mg (10)": 24,
+        "Amox 1000mg (14)": 24,
+        "Amox/Clav 500/125mg (20)": 24,
+        "Amox/Clav 875/125mg (10)": 24,
+        "Ampicillin 500mg (20)": 24,
+        "Fluclox 500mg (20)": 24,
+        "Amox 250mg Chew (20)": 24,
     }
 
     proc_times = {
