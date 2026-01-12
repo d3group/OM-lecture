@@ -14,6 +14,7 @@ def _():
     import altair as alt
     import pandas as pd
     import numpy as np
+    import pulp  # For educational purposes (model structure), but we load from cache, don't solve
     import sys
     import os
     import datetime
