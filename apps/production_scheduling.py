@@ -14,7 +14,6 @@ def _():
     import altair as alt
     import pandas as pd
     import numpy as np
-    import pulp
     import sys
     import os
     import datetime
