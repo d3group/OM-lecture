@@ -17,15 +17,16 @@ from pathlib import Path
 # -----------------------------------------------------
 def get_jobs_df():
     """Generate the same job data as in production_scheduling.py"""
+    # Adjusted batch counts to make problem slightly tight (total work slightly exceeds 1800h capacity)
     mps_march_counts = {
-        "Amox 500mg (20)": 3,
-        "Amox 875mg (10)": 2,
-        "Amox 1000mg (14)": 2,
-        "Amox/Clav 500/125mg (20)": 2,
-        "Amox/Clav 875/125mg (10)": 2,
-        "Ampicillin 500mg (20)": 2,
-        "Fluclox 500mg (20)": 2,
-        "Amox 250mg Chew (20)": 2,
+        "Amox 500mg (20)": 33,
+        "Amox 875mg (10)": 27,
+        "Amox 1000mg (14)": 27,
+        "Amox/Clav 500/125mg (20)": 27,
+        "Amox/Clav 875/125mg (10)": 27,
+        "Ampicillin 500mg (20)": 27,
+        "Fluclox 500mg (20)": 27,
+        "Amox 250mg Chew (20)": 27,
     }
 
     proc_times = {
@@ -56,15 +57,15 @@ def get_jobs_df():
 
             if origin == "Customer Order":
                 # Some urgent orders with very tight deadlines
-                delivery_at_dc = np.random.randint(4, 10)
+                delivery_at_dc = np.random.randint(4, 30)
                 pack_qa_buffer = np.random.choice([2, 3])
                 ship_buffer = np.random.choice([1, 2])
-                due_day = max(1, min(24, delivery_at_dc - pack_qa_buffer - ship_buffer))
+                due_day = max(1, min(30, delivery_at_dc - pack_qa_buffer - ship_buffer))
             else:
                 # DC replenishments - some very urgent
-                reorder_hit = np.random.randint(3, 8)
+                reorder_hit = np.random.randint(3, 30)
                 pack_qa_buffer = np.random.choice([1, 2])
-                due_day = max(1, min(24, reorder_hit - pack_qa_buffer))
+                due_day = max(1, min(30, reorder_hit - pack_qa_buffer))
 
             batches.append(
                 {
@@ -200,8 +201,8 @@ def generate_cache():
     
     # Slider ranges from production_scheduling.py
     caps = range(10, 25)     # 10 to 24 (step=1)
-    horizons = range(5, 25)  # 5 to 24 (step=1)
-    modes = ["tard", "feas"]
+    horizons = range(5, 31)  # 5 to 30 (step=1)
+    modes = ["tard"]  # Only generate for tard mode (main app only uses this)
     num_lines = 3
     
     cache = {}
@@ -210,7 +211,7 @@ def generate_cache():
     
     print(f"Generating cache for {total_steps} scenarios...")
     print(f"Capacity range: 10-24 h/day")
-    print(f"Horizon range: 5-24 days")
+    print(f"Horizon range: 5-30 days")
     print(f"Modes: {modes}")
     print()
     
@@ -220,16 +221,17 @@ def generate_cache():
                 step += 1
                 key = f"{cap}_{day}_{mode}"
                 
-                if step % 100 == 0 or step == 1:
+                if step % 10 == 0 or step == 1:
                     print(f"[{step}/{total_steps}] ({step/total_steps*100:.1f}%) - {key}")
                 
+                # Use shorter time limit for faster generation (can increase if needed)
                 rows, status = solve_scheduling(
                     jobs_df,
                     capacity_per_line=float(cap),
                     days_in_month=int(day),
                     num_lines=num_lines,
                     objective_mode=mode,
-                    time_limit_s=30,
+                    time_limit_s=15,  # Reduced from 30s for faster generation
                 )
                 
                 if rows is None:
@@ -237,16 +239,13 @@ def generate_cache():
                 else:
                     cache[key] = {"status": status, "data": rows}
     
-    # Write to Python file
-    output_path = Path(__file__).parent / "production_scheduling_cache.py"
+    # Write to JSON file (matching production_scheduling.py expectations)
+    output_path = Path(__file__).parent / "public" / "scheduling_cache.json"
+    output_path.parent.mkdir(exist_ok=True)
     print(f"\nWriting to {output_path}...")
     
     with open(output_path, "w") as f:
-        f.write("# Auto-generated cache file - do not edit manually\n")
-        f.write("# Run generate_scheduling_cache.py to regenerate\n\n")
-        f.write("SCHEDULING_CACHE = ")
-        f.write(json.dumps(cache, indent=None))
-        f.write("\n")
+        json.dump(cache, f, indent=2)
     
     # Summary
     optimal_count = sum(1 for v in cache.values() if v["status"] == "Optimal")

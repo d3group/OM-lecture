@@ -443,66 +443,79 @@ def _(sc, title_slide):
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 1a: MPS Decides Batches - Intro
-    step1a_slide = sc.create_slide("Step 1: MPS Decides How Many Batches", layout_type="1-column")
-    step1a_slide.content1 = mo.md("""
-    For one specific month (say **March**), the Master Production Schedule has already decided:
+    # Introduction: What is Production Scheduling?
+    intro_slide = sc.create_slide("What is Production Scheduling?", layout_type="1-column")
+    intro_slide.content1 = mo.md("""
+    **Production Scheduling** assigns jobs (batches) to specific days and production lines, respecting capacity constraints and optimizing performance objectives.
 
-    $$y_i^{\\text{MPS}} \\quad \\text{batches of product } i \\quad (i = 1, \\dots, 8)$$
+    ### Key Objectives
 
-    Each of these batches now becomes a **"job"** in the scheduling model.
+    | Objective | Description | Use Case |
+    |:----------|:------------|:---------|
+    | **Weighted Tardiness** | Minimize total weighted days late | Customer service, priority management |
+    | **Makespan** | Minimize completion time of last job | Throughput, resource utilization |
+    | **Flow Time** | Minimize average time jobs spend in system | Work-in-process reduction |
+    | **Setup Costs** | Minimize changeover time/cost | Efficiency, cost reduction |
 
-    For product $i$ we index the batches $k = 1, \\dots, y_i^{\\text{MPS}}$.
+    > In this module, we focus on **minimizing weighted tardiness** to balance customer service and product priorities.
     """)
-    return (step1a_slide,)
+    return (intro_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step1a_slide):
-    step1a_slide.render()
+def _(intro_slide):
+    intro_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 1b: MPS Batch Table
-    step1b_slide = sc.create_slide("Step 1: March Batch Plan from MPS", layout_type="1-column")
-    step1b_slide.content1 = mo.md("""
-    | Product | Batches ($y_i^{\\text{MPS}}$) | Hours/Batch ($u_i$) |
+    # Inputs: Batches from MPS
+    inputs_batches_slide = sc.create_slide("Inputs: Batches from MPS", layout_type="1-column")
+    # Calculate totals for display
+    total_batches = sum([33, 27, 27, 27, 27, 27, 27, 27])  # 222 batches
+    
+    inputs_batches_slide.content1 = mo.md(f"""
+    For one specific month (say **March**), the Master Production Schedule has already decided:
+
+    $$y_i^{{\\text{{MPS}}}} \\quad \\text{{batches of product }} i \\quad (i = 1, \\dots, 8)$$
+
+    Each of these batches becomes a **"job"** in the scheduling model, indexed as $(i, k)$ where $k = 1, \\dots, y_i^{{\\text{{MPS}}}}$.
+
+    | Product | Batches ($y_i^{{\\text{{MPS}}}}$) | Hours/Batch ($u_i$) |
     |:--------|:----------------------------:|:-------------------:|
-    | Amox 500mg | 3 | 8.5 |
-    | Amox 875mg | 2 | 9.5 |
-    | Amox 1000mg | 2 | 7.5 |
-    | Amox/Clav 500/125 | 2 | 8.0 |
-    | Amox/Clav 875/125 | 2 | 9.0 |
-    | Ampicillin 500mg | 2 | 8.5 |
-    | Fluclox 500mg | 2 | 7.0 |
-    | Amox 250mg Chew | 2 | 8.0 |
+    | Amox 500mg | 33 | 8.5 |
+    | Amox 875mg | 27 | 9.5 |
+    | Amox 1000mg | 27 | 7.5 |
+    | Amox/Clav 500/125 | 27 | 8.0 |
+    | Amox/Clav 875/125 | 27 | 9.0 |
+    | Ampicillin 500mg | 27 | 8.5 |
+    | Fluclox 500mg | 27 | 7.0 |
+    | Amox 250mg Chew | 27 | 8.0 |
 
-    **Total:** $\\sum_{i=1}^{8} y_i^{\\text{MPS}} = 17$ jobs (batches)
-
-    **Total hours:** $\\sum_{i=1}^{8} y_i^{\\text{MPS}} \\cdot u_i \\approx 141$ hours
+    **Total:** $\\sum_{{i=1}}^{{8}} y_i^{{\\text{{MPS}}}} = {total_batches}$ jobs (batches)
     """)
-    return (step1b_slide,)
+    return (inputs_batches_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step1b_slide):
-    step1b_slide.render()
+def _(inputs_batches_slide):
+    inputs_batches_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(np, pd):
+    # Adjusted batch counts to make problem slightly tight (total work slightly exceeds 1800h capacity)
     mps_march_counts = {
-        "Amox 500mg (20)": 3,
-        "Amox 875mg (10)": 2,
-        "Amox 1000mg (14)": 2,
-        "Amox/Clav 500/125mg (20)": 2,
-        "Amox/Clav 875/125mg (10)": 2,
-        "Ampicillin 500mg (20)": 2,
-        "Fluclox 500mg (20)": 2,
-        "Amox 250mg Chew (20)": 2,
+        "Amox 500mg (20)": 33,
+        "Amox 875mg (10)": 27,
+        "Amox 1000mg (14)": 27,
+        "Amox/Clav 500/125mg (20)": 27,
+        "Amox/Clav 875/125mg (10)": 27,
+        "Ampicillin 500mg (20)": 27,
+        "Fluclox 500mg (20)": 27,
+        "Amox 250mg Chew (20)": 27,
     }
 
     proc_times = {
@@ -533,15 +546,15 @@ def _(np, pd):
 
             if origin == "Customer Order":
                 # Some urgent orders with very tight deadlines
-                delivery_at_dc = np.random.randint(4, 10)
+                delivery_at_dc = np.random.randint(4, 30)
                 pack_qa_buffer = np.random.choice([2, 3])
                 ship_buffer = np.random.choice([1, 2])
-                due_day = max(1, min(24, delivery_at_dc - pack_qa_buffer - ship_buffer))
+                due_day = max(1, min(30, delivery_at_dc - pack_qa_buffer - ship_buffer))
             else:
                 # DC replenishments - some very urgent
-                reorder_hit = np.random.randint(3, 8)
+                reorder_hit = np.random.randint(3, 30)
                 pack_qa_buffer = np.random.choice([1, 2])
-                due_day = max(1, min(24, reorder_hit - pack_qa_buffer))
+                due_day = max(1, min(30, reorder_hit - pack_qa_buffer))
 
             batches.append(
                 {
@@ -560,10 +573,32 @@ def _(np, pd):
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 2a: Customer Orders - Intro
-    step2a_slide = sc.create_slide("Step 2: Batches Need Due Dates", layout_type="1-column")
-    step2a_slide.content1 = mo.md("""
-    Each batch $(i,k)$ now needs a **due date** inside the month.
+    # Inputs: Processing Times
+    inputs_proc_times_slide = sc.create_slide("Inputs: Processing Times", layout_type="1-column")
+    inputs_proc_times_slide.content1 = mo.md("""
+    Each batch of product $i$ requires $u_i$ hours of processing time on a tablet line.
+
+    **Processing time** ($u_i$) = hours needed to complete one batch of product $i$
+
+    These values come from the MPS data (see previous slide) and typically range from 7-10 hours per batch.
+
+    > **Note:** Processing times are product-specific and determined by batch size and production rate.
+    """)
+    return (inputs_proc_times_slide,)
+
+
+@app.cell(hide_code=True)
+def _(inputs_proc_times_slide):
+    inputs_proc_times_slide.render()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo, sc):
+    # Inputs: Due Dates
+    inputs_due_dates_slide = sc.create_slide("Inputs: Due Dates", layout_type="1-column")
+    inputs_due_dates_slide.content1 = mo.md("""
+    Each batch $(i,k)$ needs a **due date** $\\text{due}_{i,k}$ inside the month.
 
     Due dates come from two sources:
 
@@ -573,171 +608,287 @@ def _(mo, sc):
     We use **backward scheduling** to derive the tablet line due date:
 
     $$\\text{due}_{i,k} = \\text{(downstream requirement)} - \\text{(lead times)}$$
+
+    **Example (Customer Order):** Hospital needs product by day 25 at their DC.
+    - Shipping: 2 days → Required at packaging by day 23
+    - Packaging/QA: 3 days → **Due at tablet line: Day 20**
+
+    **Example (DC Replenishment):** Fürth DC hits reorder point on day 22.
+    - Packaging/QA: 2 days → **Due at tablet line: Day 20**
     """)
-    return (step2a_slide,)
+    return (inputs_due_dates_slide,)
 
 
 @app.cell(hide_code=True)
-def _(mo, sc):
-    # Step 2a2: Customer Order Example
-    step2a2_slide = sc.create_slide("Step 2: Customer-Order Example", layout_type="1-column")
-    step2a2_slide.content1 = mo.md("""
-    **Example:** A hospital needs product by day 25 at their DC.
-
-    | Stage | Lead Time | Required Complete |
-    |:------|:---------:|:-----------------:|
-    | Customer DC | - | Day 25 |
-    | ← Shipping | 2 days | Day 23 |
-    | ← Packaging/QA | 3 days | Day 20 |
-    | **Tablet Line** | - | **Due: Day 20** |
-
-    $$\\text{due}_{i,k} = 25 - 2 - 3 = 20$$
-    """)
-    return (step2a2_slide,)
-
-
-@app.cell(hide_code=True)
-def _(step2a2_slide):
-    step2a2_slide.render()
+def _(inputs_due_dates_slide):
+    inputs_due_dates_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 2b: DC Replenishment Example
-    step2b_slide = sc.create_slide("Step 2: DC Replenishment Example", layout_type="1-column")
-    step2b_slide.content1 = mo.md("""
-    **Example:** **Fürth DC** will hit reorder point for **Fluclox 500mg** on day 22.
+    # Inputs: Capacity
+    inputs_capacity_slide = sc.create_slide("Inputs: Production Capacity", layout_type="1-column")
+    inputs_capacity_slide.content1 = mo.md("""
+    **30 working days** in the month: $d = 1, \\dots, 30$
 
-    | Stage | Lead Time | Required Complete |
-    |:------|:---------:|:-----------------:|
-    | DC Reorder Point | - | Day 22 |
-    | ← Packaging/QA | 2 days | Day 20 |
-    | **Tablet Line** | - | **Due: Day 20** |
+    **3 identical tablet lines**: $\\ell = 1, 2, 3$
 
-    $$\\text{due}_{i,k} = 22 - 2 = 20$$
+    Each line has 2×7.5 h + 1×5 h = **20 hours per day**
 
-    ---
+    | Level | Capacity Calculation |
+    |:------|:---------------------|
+    | Per line per day | $\\text{Cap}^{\\text{line}} = 20$ h |
+    | Site per day | $3 \\times 20 = 60$ h |
+    | Full month | $30 \\times 60 = 1{,}800$ h |
 
-    **Summary:** Every batch $(i,k)$ gets a due date $\\text{due}_{i,k} \\in \\{1,\\dots,24\\}$ derived from either a customer order or a DC inventory plan.
+    > **Note:** Later in the interactive lab, we can "play" by adjusting capacity to show that planning used a conservative number.
     """)
-    return (step2b_slide,)
+    return (inputs_capacity_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step2a_slide):
-    step2a_slide.render()
+def _(inputs_capacity_slide):
+    inputs_capacity_slide.render()
     return
 
 
 @app.cell(hide_code=True)
-def _(step2b_slide):
-    step2b_slide.render()
+def _(mo, mps_march_counts, proc_times, sc):
+    # Inputs: Capacity vs. Requirements
+    inputs_capacity_analysis_slide = sc.create_slide("Inputs: Capacity Analysis", layout_type="1-column")
+    
+    # Calculate total processing time from mps_march_counts and proc_times
+    total_proc_time = sum(mps_march_counts[prod] * proc_times[prod] for prod in mps_march_counts)
+    # Estimate setup times (assume 2h per product change, 8 products)
+    setup_time_per_product = 2.0
+    num_products = len(mps_march_counts)
+    total_setup_time = setup_time_per_product * num_products
+    total_required = total_proc_time + total_setup_time
+    
+    # Available capacity: 30 days × 3 lines × 20h = 1800h (base capacity from document)
+    available_capacity_30d = 30 * 3 * 20
+    
+    slack_30d = (available_capacity_30d - total_required) / available_capacity_30d * 100
+    
+    inputs_capacity_analysis_slide.content1 = mo.md(f"""
+    ### Total Work Required
+
+    **Processing time:** $\\sum_{{i=1}}^{{8}} \\sum_{{k=1}}^{{y_i^{{\\text{{MPS}}}}}} u_i = {total_proc_time:.1f}$ hours
+
+    **Setup times:** $\\sum_{{i=1}}^{{8}} \\text{{setup}}_i \\approx {total_setup_time:.0f}$ hours (estimated)
+
+    **Total required:** $\\approx {total_required:.1f}$ hours
+
+    ### Available Capacity
+
+    **30 working days:** $30 \\times 3 \\times 20 = {available_capacity_30d}$ hours  
+    **Slack:** ${slack_30d:.1f}\\%$
+
+    > The problem is **slightly tight** — total work slightly exceeds the 1,800h capacity, making scheduling decisions non-trivial.
+    """)
+    return (inputs_capacity_analysis_slide,)
+
+
+@app.cell(hide_code=True)
+def _(inputs_capacity_analysis_slide):
+    inputs_capacity_analysis_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(df_batches, mo, sc):
-    # Step 2c: Complete Job List
-    step2c_slide = sc.create_slide("Step 2: The 17 Jobs with Due Dates", layout_type="1-column")
+    # Inputs: Complete Job List
+    inputs_jobs_slide = sc.create_slide("Inputs: Complete Job List", layout_type="1-column")
     jobs_table = df_batches[
         ["BatchID", "Product", "Origin", "ProcessTime", "DueDay", "Priority"]
     ].rename(
         columns={"ProcessTime": "Hours", "DueDay": "Due Day", "Priority": "Weight"}
     )
-    step2c_slide.content1 = mo.vstack([
-        mo.md("""Every batch $(i, k)$ now has: **due date**, **processing time**, and **priority weight**"""),
+    inputs_jobs_slide.content1 = mo.vstack([
+        mo.md("""Every batch $(i, k)$ has: **due date**, **processing time**, and **priority weight**"""),
         mo.ui.table(jobs_table, selection=None, page_size=10),
     ])
-    return (step2c_slide,)
+    return (inputs_jobs_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step2c_slide):
-    step2c_slide.render()
+def _(inputs_jobs_slide):
+    inputs_jobs_slide.render()
+    return
+
+
+@app.cell(hide_code=True)
+def _(alt, df_batches, mo, pd, sc):
+    # Gantt Chart: Example Schedule
+    gantt_example_slide = sc.create_slide("What Does a Schedule Look Like?", layout_type="1-column")
+    
+    # Create a simple example schedule for visualization
+    # Assign jobs to days and lines (simple round-robin for demo)
+    example_schedule = []
+    example_days = list(range(1, 25))
+    example_lines = ["Line 1", "Line 2", "Line 3"]
+    day_idx = 0
+    line_idx = 0
+    
+    for idx, batch_row in df_batches.iterrows():
+        example_schedule.append({
+            "BatchID": batch_row["BatchID"],
+            "Product": batch_row["Product"][:15],  # Shorten for display
+            "Day": example_days[day_idx % len(example_days)],
+            "Line": example_lines[line_idx % len(example_lines)],
+            "ProcessTime": batch_row["ProcessTime"],
+            "DueDay": batch_row["DueDay"],
+            "Tardiness": max(0, example_days[day_idx % len(example_days)] - batch_row["DueDay"]),
+        })
+        # Move to next day/line (simple assignment)
+        if (idx + 1) % 3 == 0:
+            day_idx += 1
+        line_idx = (line_idx + 1) % 3
+    
+    df_example = pd.DataFrame(example_schedule)
+    df_example["StartPos"] = df_example["Day"] - 0.4
+    df_example["EndPos"] = df_example["Day"] + 0.4
+    df_example["LateFlag"] = df_example["Tardiness"] > 0
+    
+    example_base = alt.Chart(df_example).encode(
+        x=alt.X("StartPos:Q", title="Working Day", scale=alt.Scale(domain=[0, 25])),
+        x2="EndPos:Q",
+        y=alt.Y("Line:N", title="Production Line", sort=["Line 1", "Line 2", "Line 3"]),
+        color=alt.Color(
+            "Product:N", 
+            legend=alt.Legend(title="Product", orient="bottom", columns=4),
+            scale=alt.Scale(scheme="tableau10")
+        ),
+        tooltip=[
+            alt.Tooltip("BatchID:N", title="Batch"),
+            alt.Tooltip("Product:N", title="Product"),
+            alt.Tooltip("Day:Q", title="Scheduled Day"),
+            alt.Tooltip("DueDay:Q", title="Due Day"),
+            alt.Tooltip("Tardiness:Q", title="Days Late"),
+        ],
+    )
+    
+    example_bars = example_base.mark_rect(height=30, cornerRadius=3)
+    example_labels = example_base.mark_text(color="white", fontSize=9, fontWeight="bold").encode(text="BatchID:N")
+    example_late_outline = (
+        example_base.transform_filter("datum.LateFlag == true")
+        .mark_rect(height=30, stroke="#dc2626", strokeWidth=2, fillOpacity=0.0, cornerRadius=3)
+    )
+    
+    example_chart = (example_bars + example_labels + example_late_outline).properties(
+        title=alt.TitleParams(
+            text="Example Production Schedule (Gantt Chart)",
+            subtitle="Red outline indicates late jobs",
+            fontSize=16,
+        ),
+        width=900,
+        height=180,
+    )
+    
+    gantt_example_slide.content1 = mo.vstack([
+        mo.md("""
+        A **Gantt chart** visualizes the schedule, showing which jobs run on which days and lines.
+        
+        This example shows a simple assignment — but is it **optimal**?
+        """),
+        mo.ui.altair_chart(example_chart),
+    ])
+    return (gantt_example_slide,)
+
+
+@app.cell(hide_code=True)
+def _(gantt_example_slide):
+    gantt_example_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3a: The Scheduling Problem - Intro
-    step3a_slide = sc.create_slide("Step 3: The Scheduling Model", layout_type="1-column")
-    step3a_slide.content1 = mo.md("""
+    # Translate to Model: We Want an Optimized Schedule
+    translate_slide = sc.create_slide("From Schedule to Optimization Model", layout_type="1-column")
+    translate_slide.content1 = mo.md("""
+    The simple schedule shown may not be **optimal**. We need a mathematical model to find the best assignment.
+
+    ### What Makes a Schedule "Good"?
+
+    - **Minimize tardiness:** Jobs completed on or before their due dates
+    - **Respect priorities:** High-priority products get scheduled first
+    - **Use capacity efficiently:** No line overloads, balanced utilization
+
+    ### The Optimization Approach
+
+    We formulate a **Mixed-Integer Linear Program (MILP)** that:
+
+    1. **Decides:** Which day and line for each batch
+    2. **Respects:** Daily capacity constraints per line
+    3. **Minimizes:** Total weighted tardiness
+
+    > Next, we'll introduce the mathematical model step by step.
+    """)
+    return (translate_slide,)
+
+
+@app.cell(hide_code=True)
+def _(translate_slide):
+    translate_slide.render()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo, sc):
+    # Model Introduction: The Scheduling Problem
+    model_intro_slide = sc.create_slide("The Scheduling Model", layout_type="1-column")
+    model_intro_slide.content1 = mo.md("""
     The scheduling model assigns each batch to a **day** and **line**, respecting daily capacity and trying to minimize late completion (tardiness).
 
-    **Given:** Batches from MPS with due dates
+    **Given:** Batches from MPS with due dates, processing times, priorities
 
     **Decide:** Which day and which line for each batch
 
     **Respect:** Daily capacity per line
 
     **Minimize:** Total weighted tardiness
+
+    > We'll now build the mathematical model step by step.
     """)
-    return (step3a_slide,)
+    return (model_intro_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3a_slide):
-    step3a_slide.render()
+def _(model_intro_slide):
+    model_intro_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3a2: Calendar and Capacity
-    step3a2_slide = sc.create_slide("Step 3: Calendar and Capacity", layout_type="1-column")
-    step3a2_slide.content1 = mo.md("""
-    **24 working days** in the month: $d = 1, \\dots, 24$
-
-    **3 identical tablet lines**: $\\ell = 1, 2, 3$
-
-    Each line has 2×7.5 h + 1×5 h = **20 hours per day**
-
-    | Level | Capacity |
-    |:------|:--------:|
-    | Per line per day | $\\text{Cap}^{\\text{line}} = 20$ h |
-    | Site per day | $3 \\times 20 = 60$ h |
-    | Full month | $24 \\times 60 = 1{,}440$ h |
-
-    > **Processing time:** $u_i$ = hours per batch of product $i$ (from MPS data)
-    """)
-    return (step3a2_slide,)
-
-
-@app.cell(hide_code=True)
-def _(step3a2_slide):
-    step3a2_slide.render()
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo, sc):
-    # Step 3b: Sets (Indices)
-    step3b_slide = sc.create_slide("Step 3: Sets (Indices)", layout_type="1-column")
-    step3b_slide.content1 = mo.md("""
+    # Model: Sets (Indices)
+    model_sets_slide = sc.create_slide("Model: Sets (Indices)", layout_type="1-column")
+    model_sets_slide.content1 = mo.md("""
     | Symbol | Range | Description |
     |:------:|:------|:------------|
     | $i$ | $1, \\dots, 8$ | Products |
     | $k$ | $1, \\dots, y_i^{\\text{MPS}}$ | Batches of product $i$ |
-    | $d$ | $1, \\dots, 24$ | Days in the month |
+    | $d$ | $1, \\dots, 30$ | Days in the month |
     | $\\ell$ | $1, 2, 3$ | Tablet lines |
 
     > **Note:** A **job** is uniquely identified by $(i, k)$: product $i$, batch number $k$.
     """)
-    return (step3b_slide,)
+    return (model_sets_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3b_slide):
-    step3b_slide.render()
+def _(model_sets_slide):
+    model_sets_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3b2: Parameters
-    step3b2_slide = sc.create_slide("Step 3: Parameters", layout_type="1-column")
-    step3b2_slide.content1 = mo.md("""
+    # Model: Parameters
+    model_params_slide = sc.create_slide("Model: Parameters", layout_type="1-column")
+    model_params_slide.content1 = mo.md("""
     | Symbol | Description |
     |:------:|:------------|
     | $y_i^{\\text{MPS}}$ | Batches of product $i$ (from MPS) |
@@ -748,20 +899,20 @@ def _(mo, sc):
 
     > **Note:** $\\text{due}_{i,k}$ comes from customer orders or DC inventory planning.
     """)
-    return (step3b2_slide,)
+    return (model_params_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3b2_slide):
-    step3b2_slide.render()
+def _(model_params_slide):
+    model_params_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3c: Decision Variables
-    step3c_slide = sc.create_slide("Step 3: Decision Variables", layout_type="1-column")
-    step3c_slide.content1 = mo.md("""
+    # Model: Decision Variables
+    model_vars_slide = sc.create_slide("Model: Decision Variables", layout_type="1-column")
+    model_vars_slide.content1 = mo.md("""
     ### Decision Variables
 
     **Primary Decision Variable:**
@@ -786,20 +937,20 @@ def _(mo, sc):
 
     > **Early completion has no benefit** — only lateness is penalized.
     """)
-    return (step3c_slide,)
+    return (model_vars_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3c_slide):
-    step3c_slide.render()
+def _(model_vars_slide):
+    model_vars_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3d: Objective Function
-    step3d_slide = sc.create_slide("Step 3: Objective Function", layout_type="1-column")
-    step3d_slide.content1 = mo.md("""
+    # Model: Objective Function
+    model_obj_slide = sc.create_slide("Model: Objective Function", layout_type="1-column")
+    model_obj_slide.content1 = mo.md("""
     ### Minimize Total Weighted Tardiness
 
     $$\\min \\; Z = \\sum_{i=1}^{8} \\sum_{k=1}^{y_i^{\\text{MPS}}} w_i \\cdot T_{i,k}$$
@@ -809,14 +960,20 @@ def _(mo, sc):
     - Late jobs contribute $w_i \\times$ (days late)
     - Critical SKUs (high $w_i$) are penalized more → solver prioritizes them
     """)
-    return (step3d_slide,)
+    return (model_obj_slide,)
+
+
+@app.cell(hide_code=True)
+def _(model_obj_slide):
+    model_obj_slide.render()
+    return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3d2: Priority Weights
-    step3d2_slide = sc.create_slide("Step 3: Priority Weights", layout_type="1-column")
-    step3d2_slide.content1 = mo.md("""
+    # Model: Priority Weights
+    model_weights_slide = sc.create_slide("Model: Priority Weights", layout_type="1-column")
+    model_weights_slide.content1 = mo.md("""
     ### Priority Weights
 
     $$w_i \\ge 1.0$$
@@ -830,14 +987,20 @@ def _(mo, sc):
     | Hospital contract | 1.2 | Service level |
     | Critical/shortage | 1.3+ | Urgent need |
     """)
-    return (step3d2_slide,)
+    return (model_weights_slide,)
+
+
+@app.cell(hide_code=True)
+def _(model_weights_slide):
+    model_weights_slide.render()
+    return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3d3: Priority Weights Example
-    step3d3_slide = sc.create_slide("Step 3: Priority Weights Example", layout_type="1-column")
-    step3d3_slide.content1 = mo.md("""
+    # Model: Priority Weights Example
+    model_weights_ex_slide = sc.create_slide("Model: Priority Weights Example", layout_type="1-column")
+    model_weights_ex_slide.content1 = mo.md("""
     ### Example: A batch that's 2 days late
 
     If a job is $T$ days late, its penalty is: $\\text{Penalty} = w_i \\cdot T$
@@ -850,92 +1013,80 @@ def _(mo, sc):
 
     > **Higher weight → Larger penalty → Solver prioritizes it!**
     """)
-    return (step3d3_slide,)
+    return (model_weights_ex_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3d_slide):
-    step3d_slide.render()
-    return
-
-
-@app.cell(hide_code=True)
-def _(step3d2_slide):
-    step3d2_slide.render()
-    return
-
-
-@app.cell(hide_code=True)
-def _(step3d3_slide):
-    step3d3_slide.render()
+def _(model_weights_ex_slide):
+    model_weights_ex_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3e: Constraint 1
-    step3e_slide = sc.create_slide("Step 3: Constraint 1 - Assignment", layout_type="1-column")
-    step3e_slide.content1 = mo.md("""
+    # Model: Constraint 1 - Assignment
+    model_const1_slide = sc.create_slide("Model: Constraint 1 - Assignment", layout_type="1-column")
+    model_const1_slide.content1 = mo.md("""
     ### Each Batch Scheduled Exactly Once
 
-    $$\\sum_{d=1}^{24} \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} = 1 \\quad \\forall \\, i, \\; k = 1, \\dots, y_i^{\\text{MPS}}$$
+    $$\\sum_{d=1}^{30} \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} = 1 \\quad \\forall \\, i, \\; k = 1, \\dots, y_i^{\\text{MPS}}$$
 
     Every batch must be assigned to **exactly one day** and **exactly one line**.
     """)
-    return (step3e_slide,)
+    return (model_const1_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3e_slide):
-    step3e_slide.render()
+def _(model_const1_slide):
+    model_const1_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3e2: Constraint 2
-    step3e2_slide = sc.create_slide("Step 3: Constraint 2 - Capacity", layout_type="1-column")
-    step3e2_slide.content1 = mo.md("""
+    # Model: Constraint 2 - Capacity
+    model_const2_slide = sc.create_slide("Model: Constraint 2 - Capacity", layout_type="1-column")
+    model_const2_slide.content1 = mo.md("""
     ### Daily Capacity Per Line
 
-    $$\\sum_{i=1}^{8} \\sum_{k=1}^{y_i^{\\text{MPS}}} u_i \\cdot x_{i,k,d,\\ell} \\le \\text{Cap}^{\\text{line}} \\quad \\forall \\, d = 1, \\dots, 24, \\; \\ell = 1, 2, 3$$
+    $$\\sum_{i=1}^{8} \\sum_{k=1}^{y_i^{\\text{MPS}}} u_i \\cdot x_{i,k,d,\\ell} \\le \\text{Cap}^{\\text{line}} \\quad \\forall \\, d = 1, \\dots, 30, \\; \\ell = 1, 2, 3$$
 
     Total processing time on each line per day cannot exceed capacity (default: 20 hours).
     """)
-    return (step3e2_slide,)
+    return (model_const2_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3e2_slide):
-    step3e2_slide.render()
+def _(model_const2_slide):
+    model_const2_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3f: Constraint 3
-    step3f_slide = sc.create_slide("Step 3: Constraint 3 - Completion Day", layout_type="1-column")
-    step3f_slide.content1 = mo.md("""
+    # Model: Constraint 3 - Completion Day
+    model_const3_slide = sc.create_slide("Model: Constraint 3 - Completion Day", layout_type="1-column")
+    model_const3_slide.content1 = mo.md("""
     ### Completion Day Definition
 
-    $$C_{i,k} = \\sum_{d=1}^{24} d \\cdot \\left( \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} \\right) \\quad \\forall \\, i, k$$
+    $$C_{i,k} = \\sum_{d=1}^{30} d \\cdot \\left( \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} \\right) \\quad \\forall \\, i, k$$
 
     The completion day equals the day on which the batch is scheduled (weighted sum extracts the day).
     """)
-    return (step3f_slide,)
+    return (model_const3_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3f_slide):
-    step3f_slide.render()
+def _(model_const3_slide):
+    model_const3_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3f2: Constraint 4
-    step3f2_slide = sc.create_slide("Step 3: Constraint 4 - Tardiness", layout_type="1-column")
-    step3f2_slide.content1 = mo.md("""
+    # Model: Constraint 4 - Tardiness
+    model_const4_slide = sc.create_slide("Model: Constraint 4 - Tardiness", layout_type="1-column")
+    model_const4_slide.content1 = mo.md("""
     ### Tardiness Definition
 
     $$T_{i,k} \\ge C_{i,k} - \\text{due}_{i,k} \\quad \\forall \\, i, k$$
@@ -944,20 +1095,20 @@ def _(mo, sc):
 
     Tardiness is at least (completion − due) or zero. The solver minimizes $T_{i,k}$, so it will equal $\\max(0, C_{i,k} - \\text{due}_{i,k})$.
     """)
-    return (step3f2_slide,)
+    return (model_const4_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3f2_slide):
-    step3f2_slide.render()
+def _(model_const4_slide):
+    model_const4_slide.render()
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Step 3g: Complete Formulation
-    step3g_slide = sc.create_slide("Step 4: Complete Formulation (MILP)", layout_type="1-column")
-    step3g_slide.content1 = mo.md("""
+    # Model: Complete Formulation
+    model_complete_slide = sc.create_slide("Complete Formulation (MILP)", layout_type="1-column")
+    model_complete_slide.content1 = mo.md("""
     **Objective:** Minimize total weighted tardiness
 
     $$\\min \\; Z = \\sum_{i=1}^{8} \\sum_{k=1}^{y_i^{\\text{MPS}}} w_i \\cdot T_{i,k}$$
@@ -966,28 +1117,28 @@ def _(mo, sc):
 
     | Constraint | Formula |
     |:-----------|:--------|
-    | **(1) Assignment** | $\\sum_{d=1}^{24} \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} = 1 \\quad \\forall \\, i, k$ |
-    | **(2) Capacity** | $\\sum_{i=1}^{8} \\sum_{k=1}^{y_i^{\\text{MPS}}} u_i \\cdot x_{i,k,d,\\ell} \\le \\text{Cap}^{\\text{line}} \\quad \\forall \\, d = 1, \\dots, 24, \\; \\ell = 1, 2, 3$ |
-    | **(3) Completion** | $C_{i,k} = \\sum_{d=1}^{24} d \\cdot \\left( \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} \\right) \\quad \\forall \\, i, k$ |
+    | **(1) Assignment** | $\\sum_{d=1}^{30} \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} = 1 \\quad \\forall \\, i, k$ |
+    | **(2) Capacity** | $\\sum_{i=1}^{8} \\sum_{k=1}^{y_i^{\\text{MPS}}} u_i \\cdot x_{i,k,d,\\ell} \\le \\text{Cap}^{\\text{line}} \\quad \\forall \\, d = 1, \\dots, 30, \\; \\ell = 1, 2, 3$ |
+    | **(3) Completion** | $C_{i,k} = \\sum_{d=1}^{30} d \\cdot \\left( \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} \\right) \\quad \\forall \\, i, k$ |
     | **(4) Tardiness** | $T_{i,k} \\ge C_{i,k} - \\text{due}_{i,k}, \\; T_{i,k} \\ge 0 \\quad \\forall \\, i, k$ |
 
     **Domains:** $x_{i,k,d,\\ell} \\in \\{0, 1\\}, \\quad C_{i,k} \\ge 0, \\quad T_{i,k} \\ge 0$
 
     *This is a Mixed-Integer Linear Program (MILP) — solved with branch-and-bound algorithms.*
     """)
-    return (step3g_slide,)
+    return (model_complete_slide,)
 
 
 @app.cell(hide_code=True)
-def _(step3g_slide):
-    step3g_slide.render()
+def _(model_complete_slide):
+    model_complete_slide.render()
     return
 
 
 @app.cell
 def _(mo):
     cap_slider = mo.ui.slider(10, 24, step=1, value=20, label="Capacity (h/day)")
-    horizon_slider = mo.ui.slider(5, 24, step=1, value=24, label="Days")
+    horizon_slider = mo.ui.slider(5, 30, step=1, value=30, label="Days")
 
     controls = mo.vstack(
         [
@@ -1190,7 +1341,7 @@ def _(
 
 @app.cell(hide_code=True)
 def _(controls, mo, results_bundle, sc):
-    step5_slide = sc.create_slide("Step 5: Interactive Scheduling Lab", layout_type="1-column")
+    analysis_slide = sc.create_slide("Analysis: Interactive Scheduling Lab", layout_type="1-column")
 
     lab_intro = mo.md("""
     <div style="background: #f0f9ff; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #0284c7; margin-bottom: 16px;">
@@ -1199,7 +1350,7 @@ def _(controls, mo, results_bundle, sc):
     </div>
     """)
 
-    step5_slide.content1 = mo.vstack(
+    analysis_slide.content1 = mo.vstack(
         [
             lab_intro,
             mo.hstack([
@@ -1214,7 +1365,7 @@ def _(controls, mo, results_bundle, sc):
         gap=2,
     )
 
-    step5_slide.render()
+    analysis_slide.render()
     return
 
 
