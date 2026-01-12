@@ -46,30 +46,21 @@ def _(os, sys):
     in_wasm = sys.platform == "emscripten"
 
     _candidates = [
-        Path("apps/public/mps"),
-        Path("public/mps"),
-        Path("../public/mps"),
-        Path("public"),
         Path("apps/public"),
+        Path("public"),
+        Path("../public"),
     ]
-    local_data_dir = next((p for p in _candidates if p.exists() and p.is_dir()), None)
-    use_local = (local_data_dir is not None) and not in_wasm
+    local_public_dir = next((p for p in _candidates if p.exists() and p.is_dir()), None)
+    use_local = (local_public_dir is not None) and not in_wasm
 
     class DataURLs:
         if use_local:
-            BASE = str(local_data_dir)
-            IMG_BASE = str(local_data_dir)
-            if not os.path.exists(f"{IMG_BASE}/production_image.png"):
-                IMG_BASE = (
-                    str(local_data_dir.parent)
-                    if local_data_dir.name == "mps"
-                    else str(local_data_dir)
-                )
+            BASE = str(local_public_dir)
+            CACHE_PATH = f"{BASE}/scheduling_cache.json"
         else:
-            BASE = raw_url("apps", "public", "mps")
-            IMG_BASE = "public/mps"
-            CACHE_URL = "public/scheduling_cache.json"
-    return
+            BASE = raw_url("apps", "public")
+            CACHE_URL = f"{BASE}/scheduling_cache.json"
+    return (DataURLs,)
 
 
 @app.cell(hide_code=True)
@@ -1023,69 +1014,34 @@ def _(df_batches):
 
 
 @app.cell
-async def _(json, os, sys):
-    import importlib.util
-
+async def _(DataURLs, json, os, sys):
     SCHEDULING_CACHE = {}
     cache_loaded = False
     cache_status = "Cache not found. Run: python apps/generate_scheduling_cache.py"
 
-    if sys.platform == "emscripten":
-        # WASM: load JSON via HTTP to avoid local-module imports.
-        try:
+    try:
+        if sys.platform == "emscripten":
             import pyodide.http
 
-            url_candidates = [
-                "public/scheduling_cache.json",
-                "apps/public/scheduling_cache.json",
-            ]
-            last_status = None
-            for url in url_candidates:
-                res = await pyodide.http.pyfetch(url)
-                last_status = res.status
-                if res.ok:
-                    SCHEDULING_CACHE = await res.json()
-                    cache_loaded = True
-                    cache_status = f"Cache loaded: {len(SCHEDULING_CACHE)} scenarios"
-                    break
-            if not cache_loaded and last_status is not None:
-                cache_status = f"Cache fetch failed: {last_status}"
-        except Exception as exc:
-            cache_status = f"Cache fetch failed: {exc}"
-    else:
-        # Prefer local JSON to avoid dependency auto-install for local modules.
-        base_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
-        path_candidates = [
-            os.path.join(base_dir, "public", "scheduling_cache.json"),
-            os.path.join(base_dir, "..", "public", "scheduling_cache.json"),
-            os.path.join(base_dir, "scheduling_cache.json"),
-            "apps/public/scheduling_cache.json",
-            "public/scheduling_cache.json",
-        ]
-
-        for path in path_candidates:
+            url = DataURLs.CACHE_URL
+            res = await pyodide.http.pyfetch(url)
+            if res.ok:
+                SCHEDULING_CACHE = await res.json()
+                cache_loaded = True
+                cache_status = f"Cache loaded: {len(SCHEDULING_CACHE)} scenarios"
+            else:
+                cache_status = f"Failed to fetch cache: {res.status}"
+        else:
+            path = DataURLs.CACHE_PATH
             if os.path.exists(path):
                 with open(path, "r") as f:
                     SCHEDULING_CACHE = json.load(f)
                 cache_loaded = True
                 cache_status = f"Cache loaded: {len(SCHEDULING_CACHE)} scenarios"
-                break
-
-        if not cache_loaded:
-            module_path = os.path.join(base_dir, "production_scheduling_cache.py")
-            if os.path.exists(module_path):
-                try:
-                    spec = importlib.util.spec_from_file_location(
-                        "production_scheduling_cache", module_path
-                    )
-                    if spec and spec.loader:
-                        module = importlib.util.module_from_spec(spec)
-                        spec.loader.exec_module(module)
-                        SCHEDULING_CACHE = module.SCHEDULING_CACHE
-                        cache_loaded = True
-                        cache_status = f"Cache loaded: {len(SCHEDULING_CACHE)} scenarios"
-                except Exception as exc:
-                    cache_status = f"Cache load failed: {exc}"
+            else:
+                cache_status = f"Cache file not found at {path}"
+    except Exception as exc:
+        cache_status = f"Warning: Failed to load cache: {exc}"
 
     return SCHEDULING_CACHE, cache_loaded, cache_status
 
