@@ -149,30 +149,22 @@ def solve_scheduling(
 
     # Try Gurobi first (much faster), fall back to CBC
     # Gurobi is used here for cache generation speed, not in the main slides
-    solver = None
     try:
         import gurobipy as gp
-        # Try to use Gurobi command-line interface
-        try:
-            solver = pulp.GUROBI_CMD(msg=0, timeLimit=time_limit_s)
-            # Test if it works by trying to solve (will fail gracefully if gurobi_cl not found)
-            _test_prob = pulp.LpProblem("test")
-            _test_prob.solve(solver)
-        except (Exception, AttributeError):
-            # Gurobi command-line not available, fall back to CBC
-            solver = None
-    except ImportError:
-        # Gurobi not installed
-        pass
-    
-    # Use CBC if Gurobi not available or failed
-    if solver is None:
+        solver = pulp.GUROBI_CMD(msg=0, timeLimit=time_limit_s)
+    except (ImportError, Exception):
+        # Gurobi not available or gurobi_cl not found, use CBC
         solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s)
     
     try:
         status = prob.solve(solver)
     except Exception as e:
-        return None, f"Solver error: {e}"
+        # If Gurobi fails (e.g., gurobi_cl not in PATH), try CBC
+        if "gurobi" in str(e).lower() or "gurobi_cl" in str(e).lower():
+            solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s)
+            status = prob.solve(solver)
+        else:
+            return None, f"Solver error: {e}"
 
     if pulp.LpStatus[status] not in ("Optimal", "Not Solved"):
         return None, f"Status: {pulp.LpStatus[status]}"
