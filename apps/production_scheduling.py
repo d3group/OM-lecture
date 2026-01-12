@@ -28,7 +28,7 @@ def _():
         warnings.filterwarnings("ignore")
     except Exception:
         pass
-    return Optional, alt, dataclass, html, mo, np, os, pd, sys
+    return Optional, alt, dataclass, html, json, mo, np, os, pd, sys
 
 
 @app.cell(hide_code=True)
@@ -1023,10 +1023,7 @@ def _(df_batches):
 
 
 @app.cell
-async def _():
-    import json
-    import os
-    import sys
+async def _(json, os, sys):
     import importlib.util
 
     SCHEDULING_CACHE = {}
