@@ -99,7 +99,7 @@ def solve_scheduling(
     days_in_month: int,
     num_lines: int,
     objective_mode: str = "tard",
-    time_limit_s: int = 30,
+    time_limit_s: int = 180,
 ):
     jobs_df = jobs_df.reset_index(drop=True)
 
@@ -236,14 +236,14 @@ def generate_cache():
                 if step % 10 == 0 or step == 1:
                     print(f"[{step}/{total_steps}] ({step/total_steps*100:.1f}%) - {key}")
                 
-                # Use adequate time limit for proper solutions (222 batches need more time)
+                # Use adequate time limit for proper solutions (195 batches need more time to prove optimality)
                 rows, status = solve_scheduling(
                     jobs_df,
                     capacity_per_line=float(cap),
                     days_in_month=int(day),
                     num_lines=num_lines,
                     objective_mode=mode,
-                    time_limit_s=60,  # Increased to 60s for proper solutions with 222 batches
+                    time_limit_s=180,  # Increased to 180s for 195 batches to prove optimality
                 )
                 
                 if rows is None:
