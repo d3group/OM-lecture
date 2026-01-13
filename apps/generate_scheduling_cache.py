@@ -179,18 +179,22 @@ def solve_scheduling(
         pass  # Continue to extract solution
 
     rows = []
+    unassigned = 0
     for j in J:
         assigned_day = None
         assigned_line = None
+        best_val = 0
+        # Find the assignment with highest value (handles numerical issues)
         for d in days:
             for l in lines:
-                if pulp.value(x[(j, d, l)]) and pulp.value(x[(j, d, l)]) > 0.5:
+                val = pulp.value(x[(j, d, l)])
+                if val is not None and val > best_val:
+                    best_val = val
                     assigned_day, assigned_line = d, l
-                    break
-            if assigned_day is not None:
-                break
 
-        if assigned_day is None:
+        if assigned_day is None or best_val < 0.5:
+            # Job not assigned - shouldn't happen for feasible solution
+            unassigned += 1
             continue
 
         due_used = int(min(max(1, jobs_df.loc[j, "due"]), days_in_month))
@@ -209,6 +213,9 @@ def solve_scheduling(
                 "Weight": float(jobs_df.loc[j, "w_i"]),
             }
         )
+    
+    if unassigned > 0:
+        print(f"  Warning: {unassigned} jobs unassigned")
 
     # Return with appropriate status
     if solution_status == "Optimal":
