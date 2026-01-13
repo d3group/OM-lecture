@@ -256,33 +256,34 @@ def generate_cache():
     print(f"Modes: {modes}")
     print()
     
+    import time
+    start_time = time.time()
+    
     for cap in caps:
         for day in horizons:
             for mode in modes:
                 step += 1
                 key = f"{cap}_{day}_{mode}"
                 
-                if step % 10 == 0 or step == 1:
-                    print(f"[{step}/{total_steps}] ({step/total_steps*100:.1f}%) - {key}", end=" -> ")
-                
-                # Use adequate time limit for proper solutions (195 batches need more time to prove optimality)
+                t0 = time.time()
+                # With 99 batches, solver should be fast
                 rows, status = solve_scheduling(
                     jobs_df,
                     capacity_per_line=float(cap),
                     days_in_month=int(day),
                     num_lines=num_lines,
                     objective_mode=mode,
-                    time_limit_s=180,  # Increased to 180s for 195 batches to prove optimality
+                    time_limit_s=30,  # 30s should be enough for 99 batches
                 )
+                elapsed = time.time() - t0
+                
+                if step % 20 == 0 or step == 1:
+                    print(f"[{step}/{total_steps}] {key} -> {status[:20]}... ({elapsed:.1f}s)")
                 
                 if rows is None:
                     cache[key] = {"status": status, "data": []}
                 else:
                     cache[key] = {"status": status, "data": rows}
-                
-                # Print status for tracked steps
-                if step % 10 == 0 or step == 1:
-                    print(status)
     
     # Write to JSON file (matching production_scheduling.py expectations)
     output_path = Path(__file__).parent / "public" / "scheduling_cache.json"
@@ -293,11 +294,12 @@ def generate_cache():
         json.dump(cache, f, indent=2)
     
     # Summary
+    total_elapsed = time.time() - start_time
     optimal_count = sum(1 for v in cache.values() if v["status"] == "Optimal")
     infeasible_count = sum(1 for v in cache.values() if "Infeasible" in v["status"])
     other_count = total_steps - optimal_count - infeasible_count
     
-    print(f"\nDone! Summary:")
+    print(f"\nDone in {total_elapsed:.1f}s! Summary:")
     print(f"  Optimal: {optimal_count}")
     print(f"  Infeasible: {infeasible_count}")
     print(f"  Other: {other_count}")
