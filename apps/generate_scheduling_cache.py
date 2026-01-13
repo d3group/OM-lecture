@@ -59,14 +59,14 @@ def get_jobs_df():
             origin = np.random.choice(["Customer Order", "DC Replenishment"], p=[0.4, 0.6])
 
             if origin == "Customer Order":
-                # Some urgent orders with very tight deadlines
-                delivery_at_dc = np.random.randint(4, 30)
+                # Customer orders - spread due dates across month
+                delivery_at_dc = np.random.randint(10, 30)
                 pack_qa_buffer = np.random.choice([2, 3])
                 ship_buffer = np.random.choice([1, 2])
                 due_day = max(1, min(30, delivery_at_dc - pack_qa_buffer - ship_buffer))
             else:
-                # DC replenishments - some very urgent
-                reorder_hit = np.random.randint(3, 30)
+                # DC replenishments - spread due dates
+                reorder_hit = np.random.randint(8, 30)
                 pack_qa_buffer = np.random.choice([1, 2])
                 due_day = max(1, min(30, reorder_hit - pack_qa_buffer))
 
