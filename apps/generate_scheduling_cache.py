@@ -149,15 +149,12 @@ def solve_scheduling(
 
     # Try Gurobi first (much faster), fall back to CBC
     solver = None
-    solver_name = "CBC"
     try:
         import gurobipy as gp
-        # Use Gurobi Python API via PuLP
-        solver = pulp.GUROBI(msg=0, timeLimit=time_limit_s)
-        solver_name = "Gurobi"
+        # Use Gurobi Python API via PuLP - pass TimeLimit via options
+        solver = pulp.GUROBI(msg=0, gapRel=0.01, timeLimit=time_limit_s)
     except (ImportError, Exception) as e:
         solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s)
-        solver_name = "CBC"
     
     try:
         status = prob.solve(solver)
@@ -165,7 +162,6 @@ def solve_scheduling(
         # If Gurobi fails, try CBC
         try:
             solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s)
-            solver_name = "CBC (fallback)"
             status = prob.solve(solver)
         except Exception as e2:
             return None, f"Solver error: {e2}"
@@ -259,7 +255,7 @@ def generate_cache():
                 key = f"{cap}_{day}_{mode}"
                 
                 if step % 10 == 0 or step == 1:
-                    print(f"[{step}/{total_steps}] ({step/total_steps*100:.1f}%) - {key}")
+                    print(f"[{step}/{total_steps}] ({step/total_steps*100:.1f}%) - {key}", end=" -> ")
                 
                 # Use adequate time limit for proper solutions (195 batches need more time to prove optimality)
                 rows, status = solve_scheduling(
@@ -275,6 +271,10 @@ def generate_cache():
                     cache[key] = {"status": status, "data": []}
                 else:
                     cache[key] = {"status": status, "data": rows}
+                
+                # Print status for tracked steps
+                if step % 10 == 0 or step == 1:
+                    print(status)
     
     # Write to JSON file (matching production_scheduling.py expectations)
     output_path = Path(__file__).parent / "public" / "scheduling_cache.json"
