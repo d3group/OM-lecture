@@ -548,14 +548,14 @@ def _(np, pd):
             origin = np.random.choice(["Customer Order", "DC Replenishment"], p=[0.4, 0.6])
 
             if origin == "Customer Order":
-                # Customer orders - spread due dates across month
-                delivery_at_dc = np.random.randint(10, 30)
+                # Customer orders - balanced due dates (not too tight, not too easy)
+                delivery_at_dc = np.random.randint(7, 28)
                 pack_qa_buffer = np.random.choice([2, 3])
                 ship_buffer = np.random.choice([1, 2])
                 due_day = max(1, min(30, delivery_at_dc - pack_qa_buffer - ship_buffer))
             else:
-                # DC replenishments - spread due dates
-                reorder_hit = np.random.randint(8, 30)
+                # DC replenishments - balanced due dates
+                reorder_hit = np.random.randint(5, 26)
                 pack_qa_buffer = np.random.choice([1, 2])
                 due_day = max(1, min(30, reorder_hit - pack_qa_buffer))
 
