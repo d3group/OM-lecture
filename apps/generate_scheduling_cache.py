@@ -148,26 +148,24 @@ def solve_scheduling(
             prob += T[j] >= C[j] - due
 
     # Try Gurobi first (much faster), fall back to CBC
-    # Use GUROBI (Python API) not GUROBI_CMD (needs gurobi_cl in PATH)
     solver = None
+    solver_name = "CBC"
     try:
         import gurobipy as gp
-        # Use Python API solver - much faster than CBC
+        # Use Gurobi Python API via PuLP
         solver = pulp.GUROBI(msg=0, timeLimit=time_limit_s)
-    except ImportError:
-        pass
-    except Exception:
-        pass
-    
-    if solver is None:
+        solver_name = "Gurobi"
+    except (ImportError, Exception) as e:
         solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s)
+        solver_name = "CBC"
     
     try:
         status = prob.solve(solver)
     except Exception as e:
-        # If Gurobi fails for any reason, try CBC
+        # If Gurobi fails, try CBC
         try:
             solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s)
+            solver_name = "CBC (fallback)"
             status = prob.solve(solver)
         except Exception as e2:
             return None, f"Solver error: {e2}"
@@ -230,6 +228,13 @@ def generate_cache():
     jobs_df = get_jobs_df()
     
     print(f"Jobs data: {len(jobs_df)} jobs, total hours: {jobs_df['u_i'].sum():.1f}")
+    
+    # Check which solver will be used
+    try:
+        import gurobipy as gp
+        print(f"Solver: Gurobi (version {gp.gurobi.version()})")
+    except ImportError:
+        print("Solver: CBC (Gurobi not available)")
     
     # Slider ranges from production_scheduling.py
     caps = range(10, 25)     # 10 to 24 (step=1)
