@@ -20,16 +20,17 @@ def get_jobs_df():
     # Batch counts based on production_planning March demand, scaled to make problem slightly tight
     # Original from MPS: 2, 1, 2, 1, 2, 2, 3, 2 batches (total 15)
     # Scaled proportionally to ~1,600h total work
+    # Reduced batch counts to allow some 0-tardiness scenarios
     mps_march_counts = {
-        "Amox 500mg (20)": 26,
-        "Amox 875mg (10)": 13,
-        "Amox 1000mg (14)": 26,
-        "Amox/Clav 500/125mg (20)": 13,
-        "Amox/Clav 875/125mg (10)": 26,
-        "Ampicillin 500mg (20)": 26,
-        "Fluclox 500mg (20)": 39,  # Highest demand in production_planning
-        "Amox 250mg Chew (20)": 26,
-    }
+        "Amox 500mg (20)": 13,
+        "Amox 875mg (10)": 7,
+        "Amox 1000mg (14)": 13,
+        "Amox/Clav 500/125mg (20)": 7,
+        "Amox/Clav 875/125mg (10)": 13,
+        "Ampicillin 500mg (20)": 13,
+        "Fluclox 500mg (20)": 20,  # Highest demand in production_planning
+        "Amox 250mg Chew (20)": 13,
+    }  # Total: 99 batches, ~800h
 
     proc_times = {
         "Amox 500mg (20)": 8.5,
