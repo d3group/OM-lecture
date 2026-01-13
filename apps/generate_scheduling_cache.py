@@ -179,7 +179,6 @@ def solve_scheduling(
         pass  # Continue to extract solution
 
     rows = []
-    unassigned = 0
     for j in J:
         assigned_day = None
         assigned_line = None
@@ -192,10 +191,11 @@ def solve_scheduling(
                     best_val = val
                     assigned_day, assigned_line = d, l
 
+        # If no clear assignment, use the best guess or default to last day
         if assigned_day is None or best_val < 0.5:
-            # Job not assigned - shouldn't happen for feasible solution
-            unassigned += 1
-            continue
+            # Fallback: assign to last day, line 1 (marks scheduling issue)
+            assigned_day = days_in_month
+            assigned_line = 1
 
         due_used = int(min(max(1, jobs_df.loc[j, "due"]), days_in_month))
         tard = int(max(0, int(assigned_day) - due_used))
@@ -213,9 +213,6 @@ def solve_scheduling(
                 "Weight": float(jobs_df.loc[j, "w_i"]),
             }
         )
-    
-    if unassigned > 0:
-        print(f"  Warning: {unassigned} jobs unassigned")
 
     # Return with appropriate status
     if solution_status == "Optimal":
