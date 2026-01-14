@@ -283,6 +283,39 @@ def generate_cache():
                 else:
                     cache[key] = {"status": status, "data": rows}
     
+    # Post-process: ensure monotonicity (higher capacity should never be worse)
+    # If a higher-capacity scenario has worse results, use the better lower-capacity solution
+    print("\nEnsuring monotonicity...")
+    fixes = 0
+    for day in horizons:
+        for mode in modes:
+            best_tard = float('inf')
+            best_key = None
+            for cap in caps:
+                key = f"{cap}_{day}_{mode}"
+                if key not in cache or not cache[key].get("data"):
+                    continue
+                
+                total_tard = sum(d.get("Tardiness", 0) for d in cache[key]["data"])
+                
+                if total_tard <= best_tard:
+                    # This is equal or better - update best
+                    best_tard = total_tard
+                    best_key = key
+                else:
+                    # This is worse than a lower capacity - use the better solution
+                    if best_key and cache[best_key].get("data"):
+                        cache[key] = {
+                            "status": f"Inherited from {best_key}",
+                            "data": cache[best_key]["data"]
+                        }
+                        fixes += 1
+    
+    if fixes > 0:
+        print(f"  Fixed {fixes} scenarios with non-monotonic results")
+    else:
+        print("  All scenarios are monotonic")
+    
     # Write to JSON file (matching production_scheduling.py expectations)
     output_path = Path(__file__).parent / "public" / "scheduling_cache.json"
     output_path.parent.mkdir(exist_ok=True)
