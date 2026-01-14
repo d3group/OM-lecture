@@ -1032,9 +1032,11 @@ def _(mo, sc):
     model_const1_slide.content1 = mo.md("""
     ### Each Batch Scheduled Exactly Once
 
-    $$\\sum_{d=1}^{30} \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} = 1 \\quad \\forall \\, i, \\; k = 1, \\dots, y_i^{\\text{MPS}}$$
+    $$\\sum_{d=1}^{D} \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} = 1 \\quad \\forall \\, i, \\; k = 1, \\dots, y_i^{\\text{MPS}}$$
 
     Every batch must be assigned to **exactly one day** and **exactly one line**.
+    
+    > **Note:** $D$ extends beyond the planning horizon (e.g., $D = 45$ for a 30-day plan) to allow scheduling of late jobs rather than causing infeasibility.
     """)
     return (model_const1_slide,)
 
@@ -1047,14 +1049,20 @@ def _(model_const1_slide):
 
 @app.cell(hide_code=True)
 def _(mo, sc):
-    # Model: Constraint 2 - Capacity
+    # Model: Constraint 2 - Capacity with Setup Times
     model_const2_slide = sc.create_slide("Model: Constraint 2 - Capacity", layout_type="1-column")
     model_const2_slide.content1 = mo.md("""
-    ### Daily Capacity Per Line
+    ### Daily Capacity Per Line (Including Setup Times)
 
-    $$\\sum_{i=1}^{8} \\sum_{k=1}^{y_i^{\\text{MPS}}} u_i \\cdot x_{i,k,d,\\ell} \\le \\text{Cap}^{\\text{line}} \\quad \\forall \\, d = 1, \\dots, 30, \\; \\ell = 1, 2, 3$$
+    $$\\sum_{i=1}^{8} \\sum_{k=1}^{y_i^{\\text{MPS}}} u_i \\cdot x_{i,k,d,\\ell} + \\sum_{i=1}^{8} s_i \\cdot z_{i,d,\\ell} \\le \\text{Cap}^{\\text{line}}$$
+    
+    $$\\forall \\, d = 1, \\dots, D, \\; \\ell = 1, 2, 3$$
 
-    Total processing time on each line per day cannot exceed capacity (default: 20 hours).
+    Where:
+    - $z_{i,d,\\ell} = 1$ if **any batch** of product $i$ is scheduled on line $\\ell$ on day $d$
+    - $s_i$ = setup/changeover time for product $i$ (typically 2 hours)
+    
+    > **Key insight:** Each product changeover costs setup time, reducing effective daily capacity!
     """)
     return (model_const2_slide,)
 
@@ -1072,9 +1080,11 @@ def _(mo, sc):
     model_const3_slide.content1 = mo.md("""
     ### Completion Day Definition
 
-    $$C_{i,k} = \\sum_{d=1}^{30} d \\cdot \\left( \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} \\right) \\quad \\forall \\, i, k$$
+    $$C_{i,k} = \\sum_{d=1}^{D} d \\cdot \\left( \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} \\right) \\quad \\forall \\, i, k$$
 
-    The completion day equals the day on which the batch is scheduled (weighted sum extracts the day).
+    The completion day equals the day on which the batch is scheduled.
+    
+    > **Note:** $C_{i,k}$ can exceed the planning horizon (e.g., $C > 30$), meaning the job is scheduled for a future period. This incurs tardiness penalty rather than causing infeasibility.
     """)
     return (model_const3_slide,)
 
@@ -1090,13 +1100,17 @@ def _(mo, sc):
     # Model: Constraint 4 - Tardiness
     model_const4_slide = sc.create_slide("Model: Constraint 4 - Tardiness", layout_type="1-column")
     model_const4_slide.content1 = mo.md("""
-    ### Tardiness Definition
+    ### Tardiness Linearization
+
+    We want: $T_{i,k} = \\max(0, C_{i,k} - \\text{due}_{i,k})$
+    
+    **Linearized as:**
 
     $$T_{i,k} \\ge C_{i,k} - \\text{due}_{i,k} \\quad \\forall \\, i, k$$
 
     $$T_{i,k} \\ge 0 \\quad \\forall \\, i, k$$
 
-    Tardiness is at least (completion − due) or zero. The solver minimizes $T_{i,k}$, so it will equal $\\max(0, C_{i,k} - \\text{due}_{i,k})$.
+    **Why this works:** Since we **minimize** $\\sum w_i \\cdot T_{i,k}$, the solver will push $T_{i,k}$ to be as small as possible while satisfying both constraints. This automatically gives $T_{i,k} = \\max(0, C_{i,k} - \\text{due}_{i,k})$.
     """)
     return (model_const4_slide,)
 
@@ -1118,16 +1132,15 @@ def _(mo, sc):
 
     **Subject to:**
 
-    | Constraint | Formula |
-    |:-----------|:--------|
-    | **(1) Assignment** | $\\sum_{d=1}^{30} \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} = 1 \\quad \\forall \\, i, k$ |
-    | **(2) Capacity** | $\\sum_{i=1}^{8} \\sum_{k=1}^{y_i^{\\text{MPS}}} u_i \\cdot x_{i,k,d,\\ell} \\le \\text{Cap}^{\\text{line}} \\quad \\forall \\, d = 1, \\dots, 30, \\; \\ell = 1, 2, 3$ |
-    | **(3) Completion** | $C_{i,k} = \\sum_{d=1}^{30} d \\cdot \\left( \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} \\right) \\quad \\forall \\, i, k$ |
-    | **(4) Tardiness** | $T_{i,k} \\ge C_{i,k} - \\text{due}_{i,k}, \\; T_{i,k} \\ge 0 \\quad \\forall \\, i, k$ |
+    | # | Constraint | Formula |
+    |:-:|:-----------|:--------|
+    | 1 | Assignment | $\\sum_{d=1}^{D} \\sum_{\\ell=1}^{3} x_{i,k,d,\\ell} = 1$ |
+    | 2 | Capacity | $\\sum_{i,k} u_i \\cdot x_{i,k,d,\\ell} + \\sum_{i} s_i \\cdot z_{i,d,\\ell} \\le \\text{Cap}$ |
+    | 3 | Completion | $C_{i,k} = \\sum_{d} d \\cdot (\\sum_{\\ell} x_{i,k,d,\\ell})$ |
+    | 4 | Tardiness | $T_{i,k} \\ge C_{i,k} - \\text{due}_{i,k}, \\; T_{i,k} \\ge 0$ |
+    | 5 | Setup link | $z_{i,d,\\ell} \\ge x_{i,k,d,\\ell}$ (if any batch of $i$ on $(d,\\ell)$) |
 
-    **Domains:** $x_{i,k,d,\\ell} \\in \\{0, 1\\}, \\quad C_{i,k} \\ge 0, \\quad T_{i,k} \\ge 0$
-
-    *This is a Mixed-Integer Linear Program (MILP) — solved with branch-and-bound algorithms.*
+    **Domains:** $x, z \\in \\{0,1\\}, \\; C, T \\ge 0$ | **$D > 30$** allows overflow scheduling
     """)
     return (model_complete_slide,)
 

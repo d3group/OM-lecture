@@ -97,56 +97,105 @@ def solve_scheduling(
     jobs_df: pd.DataFrame,
     *,
     capacity_per_line: float,
-    days_in_month: int,
+    planning_horizon: int,  # Renamed from days_in_month for clarity
     num_lines: int,
     objective_mode: str = "tard",
     time_limit_s: int = 180,
+    setup_time: float = 2.0,  # Setup time per product changeover (hours)
 ):
+    """
+    Solve the scheduling problem with setup times and extended horizon.
+    
+    Key fixes from supervisor feedback:
+    1. Setup times included in capacity constraint
+    2. Extended horizon (beyond 30 days) to avoid infeasibility
+    3. Tardiness properly linearized via T >= C - due, T >= 0, minimize T
+    """
     jobs_df = jobs_df.reset_index(drop=True)
 
-    days = list(range(1, days_in_month + 1))
+    # FIX 2: Extended horizon - allow scheduling beyond the planning period
+    # This prevents infeasibility when total work > capacity
+    extended_horizon = planning_horizon + 15  # Allow 15 extra days for overflow
+    days = list(range(1, extended_horizon + 1))
     lines = list(range(1, num_lines + 1))
     J = list(range(len(jobs_df)))
+    
+    # Get unique products for setup tracking
+    products = jobs_df["Product"].unique().tolist()
+    product_to_idx = {p: i for i, p in enumerate(products)}
+    job_product = {j: product_to_idx[jobs_df.loc[j, "Product"]] for j in J}
 
-    # Quick infeasibility screen
-    if (jobs_df["u_i"] > capacity_per_line).any():
-        return None, "Infeasible: Job > Capacity"
+    # Quick infeasibility screen - job + setup must fit in a day
+    max_job_time = jobs_df["u_i"].max()
+    if max_job_time + setup_time > capacity_per_line:
+        return None, f"Infeasible: Job ({max_job_time}h) + setup ({setup_time}h) > Capacity ({capacity_per_line}h)"
 
     prob = pulp.LpProblem("PharmaScheduling", pulp.LpMinimize)
 
+    # Decision variables
+    # x[j,d,l] = 1 if job j is scheduled on day d, line l
     x = {
         (j, d, l): pulp.LpVariable(f"x_{j}_{d}_{l}", cat=pulp.LpBinary)
         for j in J
         for d in days
         for l in lines
     }
+    
+    # FIX 1: Setup time tracking
+    # z[p,d,l] = 1 if product p is produced on line l on day d (triggers setup)
+    z = {
+        (p, d, l): pulp.LpVariable(f"z_{p}_{d}_{l}", cat=pulp.LpBinary)
+        for p in range(len(products))
+        for d in days
+        for l in lines
+    }
 
-    C = {j: pulp.LpVariable(f"C_{j}", lowBound=1, upBound=days_in_month) for j in J}
+    # C[j] = completion day of job j (no upper bound - can exceed planning horizon)
+    C = {j: pulp.LpVariable(f"C_{j}", lowBound=1) for j in J}
 
+    # Objective: minimize weighted tardiness
     if objective_mode == "tard":
         T = {j: pulp.LpVariable(f"T_{j}", lowBound=0) for j in J}
         prob += pulp.lpSum(jobs_df.loc[j, "w_i"] * T[j] for j in J)
     else:
         prob += pulp.lpSum(C[j] for j in J)
 
-    # Constraints
+    # CONSTRAINT 1: Each job assigned exactly once
     for j in J:
         prob += pulp.lpSum(x[(j, d, l)] for d in days for l in lines) == 1
 
+    # Link z to x: if any job of product p is scheduled on (d,l), then z[p,d,l] = 1
+    for p in range(len(products)):
+        jobs_of_product = [j for j in J if job_product[j] == p]
+        for d in days:
+            for l in lines:
+                # If any job of product p is on (d,l), z must be 1
+                prob += z[(p, d, l)] >= pulp.lpSum(x[(j, d, l)] for j in jobs_of_product) / len(jobs_of_product) if jobs_of_product else 0
+                # z can only be 1 if at least one job of product p is on (d,l)
+                prob += z[(p, d, l)] <= pulp.lpSum(x[(j, d, l)] for j in jobs_of_product)
+
+    # CONSTRAINT 2: Capacity with setup times
+    # FIX 1: Include setup time for each product produced on a line each day
     for d in days:
         for l in lines:
             prob += (
                 pulp.lpSum(jobs_df.loc[j, "u_i"] * x[(j, d, l)] for j in J)
+                + pulp.lpSum(setup_time * z[(p, d, l)] for p in range(len(products)))
                 <= capacity_per_line
             )
 
+    # CONSTRAINT 3: Completion day definition
     for j in J:
         prob += C[j] == pulp.lpSum(d * x[(j, d, l)] for d in days for l in lines)
 
+    # CONSTRAINT 4: Tardiness linearization
+    # FIX 3: T[j] >= max(0, C[j] - due[j])
+    # With T >= 0 (from lowBound) and T >= C - due, minimizing T gives T = max(0, C - due)
     if objective_mode == "tard":
         for j in J:
-            due = int(min(max(1, jobs_df.loc[j, "due"]), days_in_month))
+            due = int(jobs_df.loc[j, "due"])  # Don't clip due dates
             prob += T[j] >= C[j] - due
+            # T[j] >= 0 is enforced by lowBound=0
 
     # Try Gurobi first (much faster), fall back to CBC
     # Set MIPGap=0 explicitly for true optimality
@@ -192,13 +241,14 @@ def solve_scheduling(
                     best_val = val
                     assigned_day, assigned_line = d, l
 
-        # If no clear assignment, use the best guess or default to last day
+        # If no clear assignment, use the best guess or default to last day of extended horizon
         if assigned_day is None or best_val < 0.5:
             # Fallback: assign to last day, line 1 (marks scheduling issue)
-            assigned_day = days_in_month
+            assigned_day = extended_horizon
             assigned_line = 1
 
-        due_used = int(min(max(1, jobs_df.loc[j, "due"]), days_in_month))
+        # Use actual due date (not clipped) for tardiness calculation
+        due_used = int(jobs_df.loc[j, "due"])
         tard = int(max(0, int(assigned_day) - due_used))
 
         rows.append(
@@ -268,10 +318,11 @@ def generate_cache():
                 rows, status = solve_scheduling(
                     jobs_df,
                     capacity_per_line=float(cap),
-                    days_in_month=int(day),
+                    planning_horizon=int(day),
                     num_lines=num_lines,
                     objective_mode=mode,
-                    time_limit_s=60,  # 60s for true optimality with 99 batches
+                    time_limit_s=90,  # 90s for model with setup times
+                    setup_time=2.0,  # 2h setup per product changeover
                 )
                 elapsed = time.time() - t0
                 
