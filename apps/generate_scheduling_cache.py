@@ -149,12 +149,12 @@ def solve_scheduling(
             prob += T[j] >= C[j] - due
 
     # Try Gurobi first (much faster), fall back to CBC
-    # Remove gapRel to ensure true optimality (was causing suboptimal "Optimal" results)
+    # Set MIPGap=0 explicitly for true optimality
     solver = None
     try:
         import gurobipy as gp
-        # Use Gurobi Python API via PuLP - no gapRel for exact optimality
-        solver = pulp.GUROBI(msg=0, timeLimit=time_limit_s)
+        # Use Gurobi with explicit MIPGap=0 and fixed seed for reproducibility
+        solver = pulp.GUROBI(msg=0, timeLimit=time_limit_s, mip=True, gapRel=0, seed=42)
     except (ImportError, Exception) as e:
         solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s)
     
