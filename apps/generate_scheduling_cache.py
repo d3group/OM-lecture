@@ -149,11 +149,12 @@ def solve_scheduling(
             prob += T[j] >= C[j] - due
 
     # Try Gurobi first (much faster), fall back to CBC
+    # Remove gapRel to ensure true optimality (was causing suboptimal "Optimal" results)
     solver = None
     try:
         import gurobipy as gp
-        # Use Gurobi Python API via PuLP - pass TimeLimit via options
-        solver = pulp.GUROBI(msg=0, gapRel=0.01, timeLimit=time_limit_s)
+        # Use Gurobi Python API via PuLP - no gapRel for exact optimality
+        solver = pulp.GUROBI(msg=0, timeLimit=time_limit_s)
     except (ImportError, Exception) as e:
         solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit_s)
     
@@ -270,7 +271,7 @@ def generate_cache():
                     days_in_month=int(day),
                     num_lines=num_lines,
                     objective_mode=mode,
-                    time_limit_s=30,  # 30s should be enough for 99 batches
+                    time_limit_s=60,  # 60s for true optimality with 99 batches
                 )
                 elapsed = time.time() - t0
                 
