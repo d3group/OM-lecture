@@ -1,4 +1,13 @@
+import warnings
+
 import marimo as mo
+
+KNOWN_LAYOUTS = {
+    "title-slide", "1-column", "side-by-side", "flexible-2-column",
+    "2-row", "3-row", "2-column",
+}
+# Synonyms that should map to an existing layout
+LAYOUT_ALIASES = {"1-row": "1-column"}
 
 
 class Slide:
@@ -14,6 +23,12 @@ class Slide:
     ):
         self.slide_data = {}
         self.section = section
+        layout_type = LAYOUT_ALIASES.get(layout_type, layout_type)
+        if layout_type not in KNOWN_LAYOUTS:
+            warnings.warn(
+                f"Unknown layout_type {layout_type!r} for slide {title!r}; "
+                f"falling back to '2-column'. Known layouts: {sorted(KNOWN_LAYOUTS)}"
+            )
         self.layout_type = layout_type
         self.lecture_name = lecture_name
         self.presenter = presenter
