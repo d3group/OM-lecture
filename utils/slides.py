@@ -133,6 +133,9 @@ class Slide:
             )
 
         # Generic slide structure
+        # Embed marimo objects into HTML f-strings via `.text`, never `{obj}` directly:
+        # f-string formatting returns the raw markdown for mo.md() and joins all lines
+        # for other Html (which flattens <pre> code blocks onto one line).
         def create_slide_content(content, include_footer=True):
             # Use HTML structure with CSS classes for layout
             header = mo.vstack([
@@ -147,7 +150,7 @@ class Slide:
                     <div class="slide-content-wrapper">
                         {header}
                         <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; width: 100%;">
-                            {content}
+                            {content.text}
                         </div>
                         <div class="slide-footer">
                             {footer}
@@ -257,10 +260,10 @@ class Slide:
                 mo.Html(f"""
                     <div class="layout-2-column">
                         <div class="layout-column slide-content-compact">
-                            {self.content1}
+                            {mo.as_html(self.content1).text}
                         </div>
                         <div class="layout-column slide-content-compact">
-                            {self.content2}
+                            {mo.as_html(self.content2).text}
                         </div>
                     </div>
                 """)
@@ -284,10 +287,10 @@ class Slide:
             content = mo.Html(f"""
                 <div class="layout-2-column">
                     <div class="layout-column" style="flex: {style1.get('flex', 'none')}; width: {style1.get('width', 'auto')}">
-                        {self.content1}
+                        {mo.as_html(self.content1).text}
                     </div>
                     <div class="layout-column" style="flex: {style2.get('flex', 'none')}; width: {style2.get('width', 'auto')}">
-                        {self.content2}
+                        {mo.as_html(self.content2).text}
                     </div>
                 </div>
             """)
@@ -319,10 +322,10 @@ class Slide:
             content = mo.Html(f"""
                 <div class="layout-2-column">
                     <div class="layout-column">
-                        {self.content1}
+                        {mo.as_html(self.content1).text}
                     </div>
                     <div class="layout-column">
-                        {self.content2}
+                        {mo.as_html(self.content2).text}
                     </div>
                 </div>
             """)
