@@ -19,7 +19,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install marimo nbformat pulp pandas altair
+          # Pinned: the version the site was last deployed with. Newer marimo needs uv for html-wasm export.
+          pip install marimo==0.18.4 nbformat pulp pandas altair
 
       - name: Export demand management app as HTML
         run: marimo export html-wasm apps/demand_management.py -o site/demand_management --mode edit
