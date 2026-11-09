@@ -1,5 +1,7 @@
-marimo
-pandas
+# Same marimo version as the GitHub Pages deploy (.github/workflows/deploy.yml)
+marimo==0.18.4
+# pandas 3 breaks production_planning ("Cannot modify read-only array")
+pandas<3
 altair
 statsforecast
 scikit-learn
@@ -9,3 +11,7 @@ numba
 scipy
 typing_extensions
 utilsforecast
+polars
+folium
+requests
+pulp

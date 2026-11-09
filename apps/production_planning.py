@@ -781,7 +781,8 @@ def _(mo, sc):
 
     **From EOQ to Economic Lot Size (ELS)**
     - EOQ trade-off: setup cost $K_i \leftrightarrow$ holding cost $h_i$, demand $D_i$. For product $i$: 
-    $$\quad ELS_i = \sqrt{\frac{2 D_i K_i}{h_i}}$$
+
+        $$\quad ELS_i = \sqrt{\frac{2 D_i K_i}{h_i}}$$
     - Interpretation: best **lot size** if we only looked at this product alone.
         '''
     )
@@ -1007,6 +1008,7 @@ def _(mo, sc):
     We continue with **one product $i$** over the planning horizon $t = 1, \ldots, 6$.
 
     From the previous slide, we know that the batch decisions $y_{it}$ determine the inventory positions:
+
     $$I_{it} = I_{i,t-1} + b_i \cdot y_{it} - D_{it}$$
 
     Now we assign **costs** to these inventory positions.
@@ -1032,9 +1034,11 @@ def _(mo, sc):
     - If $I_{it} < 0$: we have backorders of $-I_{it}$ units and pay $\quad C_{it} = p_i \cdot (-I_{it})$
 
     Like in Chapter 3 (Inventory Planning), we can write the monthly cost as a function of the inventory position:
+
     $$C_{it}(I_{it}) = \begin{cases} h_i \, I_{it} & \text{if } I_{it} \geq 0 \\ p_i \, (-I_{it}) & \text{if } I_{it} < 0 \end{cases}$$
 
     **Total cost over the 6 months and all 8 products**
+
     $$\text{Total cost} = \sum_{t=1}^{6}\sum_{i=1}^{8}  C_{it}(I_{it})$$
         '''
     )
@@ -1072,9 +1076,11 @@ def _(mo, sc):
     capacitySlide2.content1 = mo.md(
         r'''
     Total time used on the line in month $t$:
+
     $$\sum_{i=1}^{8} \left( u_i \, y_{it} + st_i \, z_{it} \right)$$
 
     This must not exceed the available capacity:
+
     $$\sum_{i=1}^{8} \left( u_i \, y_{it} + st_i \, z_{it} \right) \leq Cap_t, \quad \forall t$$
 
     **Key message:**

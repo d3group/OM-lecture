@@ -15,7 +15,6 @@ def _():
     from utils.forecast import ForecastLoader, Evaluator, ForecastPlotter, HoltDoubleExpPlotter, HoltWintersPlotter
     from sklearn.utils import Bunch
     import marimo as mo
-    import numpy as np
 
     return (
         Bunch,
@@ -26,7 +25,6 @@ def _():
         ForecastPlotter,
         SlideCreator,
         mo,
-        np,
     )
 
 
@@ -246,55 +244,10 @@ def _(Bunch):
 
 
 @app.cell(hide_code=True)
-def _(
-    ForecastManager,
-    MA_CONFIG,
-    SES_CONFIG,
-    data,
-    fc_plotter,
-    history,
-    mo,
-    np,
-    public_dir,
-):
-
-    ma_qs = [q for q in range(MA_CONFIG.q_min, MA_CONFIG.q_max + 1, MA_CONFIG.q_step)]
-    ma_names = [f"MA_{q}" for q in ma_qs]
-
-    ses_alphas = np.arange(
-        SES_CONFIG.alpha_min,
-        SES_CONFIG.alpha_max + 0.1,
-        SES_CONFIG.alpha_step,
-    )
-    ses_names = [f"SES_{int(10*(alpha))}" for alpha in ses_alphas]
-
-
-    params = {
-        "naive": [{"alias": "Naive"}],
-        "ma": [{"q": q, "alias": ma_alias} for q, ma_alias in zip(ma_qs, ma_names)],
-        "ses": [
-            {"alpha": alpha, "alias": ses_alias}
-            for ses_alias, alpha in zip(ses_names, ses_alphas)
-        ]
-        + [{"alias": "SES"}],
-        "holt": [{"alias": "Holt"}],
-        "holt_winters": [{"alias": "Holt‑Winters"}],
-    }
-
-    fc_manager = ForecastManager(
-        freq="W",
-        model_params=params,
-        forecast_path=f"{public_dir}/data/forecast_live_session.csv",
-        historic_path=f"{public_dir}/data/historic_forecast_live_session.csv",
-        overwrite=False,
-    )
-    forecast, historic_forecast = fc_manager.run(
-        data=data,
-        history=history,
-        n_windows=6,
-        historic_n_windows=1,
-        step_size=4,
-        h=4,
+def _(ForecastLoader, fc_plotter, mo, public_dir):
+    forecast, historic_forecast = ForecastLoader().load_data(
+        f"{public_dir}/data/forecast_live_session.csv",
+        f"{public_dir}/data/historic_forecast_live_session.csv",
     )
 
     mo.ui.dataframe(
