@@ -464,7 +464,7 @@ def _(Bunch, data, mo):
 @app.cell
 def _(mo, sc):
 
-    qr_first_slide1 = sc.create_slide("A First Order Policy ", layout_type="1-row")
+    qr_first_slide1 = sc.create_slide("A First Order Policy ", layout_type="1-column")
 
 
     qr_first_slide1.content1 = mo.md(r"""
@@ -533,7 +533,7 @@ def _(qr_first_slide):
 @app.cell
 def _(mo, sc):
 
-    qr_motivation_slide =  sc.create_slide("The QR Order Policy", layout_type="1-row")
+    qr_motivation_slide =  sc.create_slide("The QR Order Policy", layout_type="1-column")
 
 
     qr_motivation_slide.content1 = mo.md(r"""

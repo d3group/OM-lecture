@@ -844,7 +844,7 @@ def _(evaluation_ma1):
 
 @app.cell
 def _(mo, sc):
-    ma_drawbacks = sc.create_slide("Moving Average Forecasting", layout_type="1-row")
+    ma_drawbacks = sc.create_slide("Moving Average Forecasting", layout_type="1-column")
     ma_drawbacks.content1 = mo.md(
     """
      **Limitations of Moving Average Forecasting**
@@ -1273,7 +1273,7 @@ def _(titleSlide2):
 
 @app.cell
 def _(mo, sc):
-    ses_drawbacks = sc.create_slide("Forecasting with Single Exponential Smoothing", layout_type="1-row")
+    ses_drawbacks = sc.create_slide("Forecasting with Single Exponential Smoothing", layout_type="1-column")
     ses_drawbacks.content1 = mo.md(
     """
      **Limitations of Single Exponential Smoothing**
