@@ -308,11 +308,13 @@ def _(alt, df_supply, mo, pd, sc):
         r"""
         Today (at time **t = 0**) we have inventory in our central warehouse.
         This is the **on-hand inventory**, denoted
+
         $$I_0^{central}$$
 
         We also have **purchase orders to suppliers** that were placed in earlier periods.
         These orders will **arrive in future periods** (e.g., at $t=1, t=2, ...$).
         We call these **planned receipts**:
+
         $$PR_t$$
 
         Using the **gross requirements** from Step 1 (the DC demand), and the **planned receipts**,
@@ -320,6 +322,7 @@ def _(alt, df_supply, mo, pd, sc):
         we can compute the **projected on-hand inventory** for each future period.
 
         The projection follows the standard MRP netting equation:
+
         $$I_t^{central} = I_{t-1}^{central} + PR_t - GR_t \quad \text{for } t = 1, ..., 20$$
         """
     )
@@ -455,6 +458,7 @@ def _(alt, df_supply, mo, pd, sc):
         If projected inventory falls **below** the safety stock, a **net requirement** is created in that period.
 
         **Net Requirements Formula:**
+
         $$NR_t = \max(0, SS^{central} - I_t^{central}) \quad \text{for } t = 1, ..., 20$$
         """
     )
